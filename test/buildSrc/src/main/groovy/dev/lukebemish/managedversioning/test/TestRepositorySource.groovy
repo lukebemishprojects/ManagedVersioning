@@ -28,7 +28,7 @@ abstract class TestRepositorySource implements ValueSource<String, Parameters> {
             execOperations.exec {
                 it.commandLine 'git', 'init', path
             }
-            new File(path+'/version.properties').write('version=0.1.0')
+            new File(path+'/version.properties').write('version=0.1.0\n')
             execOperations.exec {
                 it.commandLine 'git', '-C', path, 'add', 'version.properties'
             }

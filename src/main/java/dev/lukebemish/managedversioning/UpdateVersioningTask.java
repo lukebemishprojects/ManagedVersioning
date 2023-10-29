@@ -4,7 +4,9 @@ import org.gradle.api.DefaultTask;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.TaskAction;
+import org.gradle.process.ExecOperations;
 
+import javax.inject.Inject;
 import java.io.FileWriter;
 import java.util.List;
 
@@ -20,7 +22,11 @@ public abstract class UpdateVersioningTask extends DefaultTask {
     @Input
     public abstract Property<String> getGitWorkingDir();
 
-    public UpdateVersioningTask() {
+    private final ExecOperations execOperations;
+
+    @Inject
+    public UpdateVersioningTask(ExecOperations operations) {
+        this.execOperations = operations;
         getOutputs().upToDateWhen(task -> getUpToDate().get() || !getUpdatable().get());
     }
 
@@ -36,7 +42,17 @@ public abstract class UpdateVersioningTask extends DefaultTask {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        ManagedVersioningPlugin.smartExec(getProject(), "git", List.of("add", getVersionFile().get()), getGitWorkingDir().get());
-        ManagedVersioningPlugin.smartExec(getProject(), "git", List.of("commit", "-m", "Bump version to "+getVersion().get()), getGitWorkingDir().get());
+        ManagedVersioningPlugin.smartExec(
+            execOperations,
+            "git",
+            List.of("add", getVersionFile().get()),
+            getGitWorkingDir().get()
+        );
+        ManagedVersioningPlugin.smartExec(
+            execOperations,
+            "git",
+            List.of("commit", "-m", "Bump version to "+getVersion().get()),
+            getGitWorkingDir().get()
+        );
     }
 }

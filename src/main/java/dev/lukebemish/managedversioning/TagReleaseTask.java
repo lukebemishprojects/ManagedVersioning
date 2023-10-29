@@ -4,7 +4,9 @@ import org.gradle.api.DefaultTask;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.TaskAction;
+import org.gradle.process.ExecOperations;
 
+import javax.inject.Inject;
 import java.util.List;
 
 public abstract class TagReleaseTask extends DefaultTask {
@@ -17,7 +19,11 @@ public abstract class TagReleaseTask extends DefaultTask {
     @Input
     public abstract Property<String> getGitWorkingDir();
 
-    public TagReleaseTask() {
+    private final ExecOperations execOperations;
+
+    @Inject
+    public TagReleaseTask(ExecOperations operations) {
+        this.execOperations = operations;
         getOutputs().upToDateWhen(task -> getUpToDate().get() || !getUpdatable().get());
     }
 
@@ -27,7 +33,7 @@ public abstract class TagReleaseTask extends DefaultTask {
             return;
         }
         ManagedVersioningPlugin.smartExec(
-            getProject(),
+            execOperations,
             "git",
             List.of("tag", getVersion().get()),
             getGitWorkingDir().get()

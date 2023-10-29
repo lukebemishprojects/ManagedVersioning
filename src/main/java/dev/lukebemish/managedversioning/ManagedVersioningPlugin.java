@@ -2,6 +2,7 @@ package dev.lukebemish.managedversioning;
 
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.process.ExecOperations;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayOutputStream;
@@ -35,11 +36,11 @@ public class ManagedVersioningPlugin implements Plugin<Project> {
     }
 
     @SuppressWarnings({"UnusedReturnValue", "SameParameterValue"})
-    static String smartExec(Project project, String command, List<String> args, Object workingDir) {
+    static String smartExec(ExecOperations operations, String command, List<String> args, Object workingDir) {
         var out = new ByteArrayOutputStream();
         var err = new ByteArrayOutputStream();
         try {
-            project.exec(spec -> {
+            operations.exec(spec -> {
                 spec.setStandardOutput(out);
                 spec.setErrorOutput(err);
                 spec.setExecutable(command);
