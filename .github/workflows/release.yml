@@ -1,0 +1,35 @@
+name: Release
+concurrency: ci-${{ github.ref }}
+on:
+    workflow_dispatch:
+jobs:
+    build:
+        runs-on: ubuntu-22.04
+        permissions:
+            contents: write
+        steps:
+            - uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+            - uses: fregante/setup-git-user@v2
+            - uses: actions/setup-java@v3
+              with:
+                  distribution: "temurin"
+                  java-version: 17
+            - name: Capture Version
+              run: |
+                  echo "captured_version=$(./gradlew printVersionName | grep -Po  '(?<=GRADLE_VERSION=\()(.*)(?=\))')" >> "$GITHUB_ENV"
+              id: capture_version
+            - name: Set Version
+              uses: rickstaa/action-create-tag@v1
+              id: "tag_create"
+              with:
+                  tag: ${{ env.captured_version }}
+            - uses: gradle/gradle-build-action@v2
+              with:
+                  arguments: build publish
+                  cache-read-only: ${{ !startsWith(github.ref, 'refs/heads/1.') }}
+              env:
+                  MAVEN_USER: github
+                  MAVEN_PASSWORD: ${{ secrets.RELEASE_MAVEN_PASSWORD }}
+                  MAVEN_URL: https://maven.lukebemish.dev/releases/

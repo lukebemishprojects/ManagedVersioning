@@ -37,6 +37,7 @@ public abstract class ManagedVersioningExtension {
 
     public ManagedVersioningExtension(Project project) {
         this.project = project;
+        this.getGitWorkingDir().convention(project.getLayout().getProjectDirectory());
         this.getStagedChangesVersionSuffix().convention("dirty");
         this.getUnstagedChangesVersionSuffix().convention("dirty");
         this.gitHash = project.getProviders().of(GitValueSource.class, spec -> {

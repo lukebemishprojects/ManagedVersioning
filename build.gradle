@@ -1,5 +1,6 @@
 plugins {
     id 'java-gradle-plugin'
+    id 'maven-publish'
 }
 
 group = 'dev.lukebemish'
@@ -10,6 +11,37 @@ gradlePlugin {
         managedVersioning {
             id = 'dev.lukebemish.managedversioning'
             implementationClass = 'dev.lukebemish.managedversioning.ManagedVersioningPlugin'
+        }
+    }
+}
+
+tasks.register('printVersionName') {
+    doLast{
+        project.exec {
+            commandLine 'echo', "GRADLE_VERSION=(${project.version})"
+        }
+    }
+}
+
+java.withSourcesJar()
+java.withJavadocJar()
+java.toolchain.languageVersion.set JavaLanguageVersion.of(17)
+
+processResources {
+    from rootProject.file('LICENSE')
+}
+
+publishing {
+    repositories {
+        if (System.getenv('MAVEN_URL')) {
+            maven {
+                name = 'LukesMaven'
+                url = System.getenv('MAVEN_URL')
+                credentials {
+                    username = System.getenv('MAVEN_USER') ?: ''
+                    password = System.getenv('MAVEN_PASSWORD') ?: ''
+                }
+            }
         }
     }
 }
