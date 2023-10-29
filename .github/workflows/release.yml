@@ -16,6 +16,8 @@ jobs:
               with:
                   distribution: "temurin"
                   java-version: 17
+            - uses: gradle/gradle-build-action@v2
+              name: Setup Gradle
             - name: Capture Version
               run: |
                   echo "captured_version=$(./gradlew printVersionName | grep -Po  '(?<=GRADLE_VERSION=\()(.*)(?=\))')" >> "$GITHUB_ENV"
