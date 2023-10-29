@@ -1,0 +1,21 @@
+import dev.lukebemish.managedversioning.test.TestRepositorySource
+
+plugins {
+    id 'dev.lukebemish.managedversioning'
+    id 'java'
+}
+
+var repository = providers.of(TestRepositorySource) {
+    parameters.projectPath.set project.projectDir.absolutePath
+}.get()
+
+managedVersioning {
+    versionFile.set file("$repository/version.properties")
+    gitWorkingDir.fileValue file(repository)
+}
+
+managedVersioning.apply()
+
+println "Version: $version"
+println "Hash: ${managedVersioning.hash.get()}"
+println "Timestamp: ${managedVersioning.timestamp.get()}"

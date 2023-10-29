@@ -1,0 +1,15 @@
+plugins {
+    id 'java-gradle-plugin'
+}
+
+group = 'dev.lukebemish'
+version = '1.0.0'
+
+gradlePlugin {
+    plugins {
+        managedVersioning {
+            id = 'dev.lukebemish.managedversioning'
+            implementationClass = 'dev.lukebemish.managedversioning.ManagedVersioningPlugin'
+        }
+    }
+}
