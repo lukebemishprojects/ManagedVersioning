@@ -58,7 +58,7 @@ public abstract class VersionValueSource implements ValueSource<String, VersionV
             }
         }
 
-        if (getParameters().getSuffix().isPresent()) {
+        if (getParameters().getSuffix().isPresent() && !fileVersion.endsWith("-"+getParameters().getSuffix().get())) {
             version += "-" + getParameters().getSuffix().get();
         }
 
