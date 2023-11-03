@@ -5,12 +5,14 @@ import dev.lukebemish.managedversioning.git.GitValueSource;
 import org.gradle.api.Project;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.RegularFileProperty;
+import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Optional;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
@@ -32,14 +34,14 @@ public abstract class ManagedVersioningExtension {
     public abstract DirectoryProperty getGitWorkingDir();
     public abstract Property<String> getStagedChangesVersionSuffix();
     public abstract Property<String> getUnstagedChangesVersionSuffix();
-    @Optional
-    public abstract Property<String> getSuffix();
+    public abstract ListProperty<String> getSuffixParts();
 
     public ManagedVersioningExtension(Project project) {
         this.project = project;
         this.getGitWorkingDir().convention(project.getLayout().getProjectDirectory());
         this.getStagedChangesVersionSuffix().convention("dirty");
         this.getUnstagedChangesVersionSuffix().convention("dirty");
+        this.getSuffixParts().convention(Collections.emptyList());
         this.gitHash = project.getProviders().of(GitValueSource.class, spec -> {
             spec.getParameters().getArgs().set(List.of("rev-parse", "HEAD"));
             spec.getParameters().getWorkingDir().set(this.getGitWorkingDir());
@@ -75,7 +77,7 @@ public abstract class ManagedVersioningExtension {
             ps.getHasMetadata().set(this.getMetadataVersion().map(s->true).orElse(false));
             ps.getStagedChangesVersionSuffix().set(this.getStagedChangesVersionSuffix());
             ps.getUnstagedChangesVersionSuffix().set(this.getUnstagedChangesVersionSuffix());
-            ps.getSuffix().set(this.getSuffix());
+            ps.getSuffixParts().set(this.getSuffixParts());
             ps.getFromFile().set(this.fromFile);
             ps.getWorkingDir().set(this.getGitWorkingDir());
             ps.getTagHash().set(this.tagHash);
