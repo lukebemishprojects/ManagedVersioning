@@ -1,3 +1,4 @@
+import dev.lukebemish.managedversioning.actions.MakeActions
 import dev.lukebemish.managedversioning.test.TestRepositorySource
 
 plugins {
@@ -12,9 +13,48 @@ var repository = providers.of(TestRepositorySource) {
 managedVersioning {
     versionFile.set file("$repository/version.properties")
     gitWorkingDir.fileValue file(repository)
+    gitHubActions {
+        release {
+            workflowDispatch.set true
+            gradleJob {
+                name.set 'build'
+                readOnly.set false
+                def build = gradlew('Build', 'build')
+                gradlew('Test 1', 'test1').configure {
+                    runsWith build
+                }
+                gradlew('Test 1', 'test1').configure {
+                    runsWith build
+                }
+                mavenRelease('github')
+            }
+        }
+        build_pr {
+            prettyName.set 'Build PR'
+            pullRequest.set true
+            gradleJob {
+                name.set 'build'
+                gradlew 'Build', 'build'
+                gradlew 'Publish', 'publish'
+                pullRequestArtifact()
+            }
+        }
+        publish_pr {
+            prettyName.set 'Publish PR'
+            publishPullRequestAction(
+                'github',
+                'dev/lukebemish/managedversioning/test',
+                'Build PR'
+            )
+        }
+    }
 }
 
 managedVersioning.apply()
+
+tasks.withType(MakeActions).configureEach {
+    actionsDirectory.fileValue file("$repository/actions")
+}
 
 println "Version: $version"
 println "Hash: ${managedVersioning.hash.get()}"

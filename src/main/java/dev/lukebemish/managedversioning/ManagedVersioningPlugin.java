@@ -1,5 +1,6 @@
 package dev.lukebemish.managedversioning;
 
+import dev.lukebemish.managedversioning.actions.MakeActions;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.process.ExecOperations;
@@ -32,6 +33,10 @@ public class ManagedVersioningPlugin implements Plugin<Project> {
             task.getGitWorkingDir().set(extension.getGitWorkingDir().getAsFile().map(File::getPath));
             task.getUpdatable().set(project.provider(() -> !extension.getUnstagedChanges().get() && !extension.getStagedChanges().get()));
             task.dependsOn(updateVersioning);
+        });
+        project.getTasks().register("makeActions", MakeActions.class, task -> {
+            task.getActionsDirectory().set(project.getLayout().getProjectDirectory().dir(".github").dir("workflows"));
+            task.getGitHubActions().addAllLater(project.provider(extension::getGitHubActions));
         });
     }
 

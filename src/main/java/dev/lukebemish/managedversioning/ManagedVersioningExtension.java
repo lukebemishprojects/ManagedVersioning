@@ -1,7 +1,10 @@
 package dev.lukebemish.managedversioning;
 
+import dev.lukebemish.managedversioning.actions.GitHubAction;
 import dev.lukebemish.managedversioning.git.GitResultSource;
 import dev.lukebemish.managedversioning.git.GitValueSource;
+import org.gradle.api.Action;
+import org.gradle.api.NamedDomainObjectContainer;
 import org.gradle.api.Project;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.RegularFileProperty;
@@ -26,6 +29,7 @@ public abstract class ManagedVersioningExtension {
     private final Provider<Boolean> stagedChanges;
     private final Provider<Boolean> unstagedChanges;
     private final Project project;
+    private final ManagedPublishingExtension publishing;
 
     public abstract RegularFileProperty getVersionFile();
     public abstract Property<String> getTimestampFormat();
@@ -38,6 +42,7 @@ public abstract class ManagedVersioningExtension {
 
     public ManagedVersioningExtension(Project project) {
         this.project = project;
+        this.publishing = project.getObjects().newInstance(ManagedPublishingExtension.class, project);
         this.getGitWorkingDir().convention(project.getLayout().getProjectDirectory());
         this.getStagedChangesVersionSuffix().convention("dirty");
         this.getUnstagedChangesVersionSuffix().convention("dirty");
@@ -86,6 +91,15 @@ public abstract class ManagedVersioningExtension {
         });
     }
 
+    public ManagedPublishingExtension getPublishing() {
+        return publishing;
+    }
+
+    public void gitHubActions(Action<NamedDomainObjectContainer<GitHubAction>> action) {
+        action.execute(getGitHubActions());
+    }
+    public abstract NamedDomainObjectContainer<GitHubAction> getGitHubActions();
+
     public void apply() {
         project.setVersion(version.get());
     }
@@ -122,5 +136,17 @@ public abstract class ManagedVersioningExtension {
 
     public Provider<Boolean> getStagedChanges() {
         return stagedChanges;
+    }
+
+    public void versionPRs() {
+        if (System.getenv(Constants.PR_NUMBER) != null) {
+            getSuffixParts().add("pr" + System.getenv(Constants.PR_NUMBER));
+        }
+    }
+
+    public void versionSnapshots() {
+        if (System.getenv(Constants.SNAPSHOT_MAVEN_URL) != null) {
+            getSuffixParts().add("SNAPSHOT");
+        }
     }
 }
