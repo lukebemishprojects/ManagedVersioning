@@ -120,7 +120,7 @@ public abstract class GradleJob {
     public void mavenSnapshot(String user) {
         secret(Constants.SNAPSHOT_MAVEN_PASSWORD);
         getGradleEnv().put(Constants.SNAPSHOT_MAVEN_USER, user);
-        getGradleEnv().put(Constants.RELEASE_MAVEN_URL, "https://maven.lukebemish.dev/snapshots/");
+        getGradleEnv().put(Constants.SNAPSHOT_MAVEN_URL, "https://maven.lukebemish.dev/snapshots/");
     }
 
     public void mavenRelease(String user) {
