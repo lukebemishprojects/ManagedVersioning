@@ -6,7 +6,6 @@ import org.gradle.api.Project;
 import org.gradle.api.publish.Publication;
 import org.gradle.api.publish.PublishingExtension;
 import org.gradle.plugins.signing.SigningExtension;
-import org.gradle.plugins.signing.SigningPlugin;
 
 import javax.inject.Inject;
 import java.net.URI;
@@ -39,70 +38,61 @@ public abstract class ManagedPublishingExtension {
         }
     }
 
-    public void mavenSnapshot() {
+    public void mavenSnapshot(PublishingExtension publishing) {
         if (System.getenv(Constants.SNAPSHOT_MAVEN_URL) != null) {
-            project.getExtensions().configure(PublishingExtension.class, publishing -> {
-                publishing.repositories(repositories -> {
-                    repositories.maven(maven -> {
-                        maven.setName("PersonalMaven");
-                        try {
-                            maven.setUrl(new URI(System.getenv(Constants.SNAPSHOT_MAVEN_URL)));
-                        } catch (URISyntaxException e) {
-                            throw new RuntimeException(e);
-                        }
-                        maven.credentials(cred -> {
-                            cred.setUsername(System.getenv(Constants.SNAPSHOT_MAVEN_USER));
-                            cred.setPassword(System.getenv(Constants.SNAPSHOT_MAVEN_PASSWORD));
-                        });
+            publishing.repositories(repositories -> {
+                repositories.maven(maven -> {
+                    maven.setName("PersonalMaven");
+                    try {
+                        maven.setUrl(new URI(System.getenv(Constants.SNAPSHOT_MAVEN_URL)));
+                    } catch (URISyntaxException e) {
+                        throw new RuntimeException(e);
+                    }
+                    maven.credentials(cred -> {
+                        cred.setUsername(System.getenv(Constants.SNAPSHOT_MAVEN_USER));
+                        cred.setPassword(System.getenv(Constants.SNAPSHOT_MAVEN_PASSWORD));
                     });
                 });
             });
         }
     }
 
-    public void mavenRelease() {
+    public void mavenRelease(PublishingExtension publishing) {
         if (System.getenv(Constants.RELEASE_MAVEN_URL) != null) {
-            project.getExtensions().configure(PublishingExtension.class, publishing -> {
-                publishing.repositories(repositories -> {
-                    repositories.maven(maven -> {
-                        maven.setName("PersonalMaven");
-                        try {
-                            maven.setUrl(new URI(System.getenv(Constants.RELEASE_MAVEN_URL)));
-                        } catch (URISyntaxException e) {
-                            throw new RuntimeException(e);
-                        }
-                        maven.credentials(cred -> {
-                            cred.setUsername(System.getenv(Constants.RELEASE_MAVEN_USER));
-                            cred.setPassword(System.getenv(Constants.RELEASE_MAVEN_PASSWORD));
-                        });
+            publishing.repositories(repositories -> {
+                repositories.maven(maven -> {
+                    maven.setName("PersonalMaven");
+                    try {
+                        maven.setUrl(new URI(System.getenv(Constants.RELEASE_MAVEN_URL)));
+                    } catch (URISyntaxException e) {
+                        throw new RuntimeException(e);
+                    }
+                    maven.credentials(cred -> {
+                        cred.setUsername(System.getenv(Constants.RELEASE_MAVEN_USER));
+                        cred.setPassword(System.getenv(Constants.RELEASE_MAVEN_PASSWORD));
                     });
                 });
             });
         }
     }
 
-    public void mavenPulLRequest() {
+    public void mavenPulLRequest(PublishingExtension publishing) {
         if (System.getenv(Constants.PR_NUMBER) != null) {
-            project.getExtensions().configure(PublishingExtension.class, publishing -> {
-                publishing.repositories(repositories -> {
-                    repositories.maven(maven -> {
-                        maven.setName("LocalMaven");
-                        maven.setUrl(project.getRootProject().getLayout().getBuildDirectory().dir("repo"));
-                    });
+            publishing.repositories(repositories -> {
+                repositories.maven(maven -> {
+                    maven.setName("LocalMaven");
+                    maven.setUrl(project.getRootProject().getLayout().getBuildDirectory().dir("repo"));
                 });
             });
         }
     }
 
-    public void sign(Publication... publications) {
+    public void sign(SigningExtension signing, Publication... publications) {
         if (System.getenv(Constants.GPG_KEY) != null) {
-            project.getPlugins().apply(SigningPlugin.class);
-            project.getExtensions().configure(SigningExtension.class, signing -> {
-                signing.useInMemoryPgpKeys(System.getenv(Constants.GPG_KEY), System.getenv(Constants.GPG_PASSWORD));
-                for (Publication publication : publications) {
-                    signing.sign(publication);
-                }
-            });
+            signing.useInMemoryPgpKeys(System.getenv(Constants.GPG_KEY), System.getenv(Constants.GPG_PASSWORD));
+            for (Publication publication : publications) {
+                signing.sign(publication);
+            }
         }
     }
 }

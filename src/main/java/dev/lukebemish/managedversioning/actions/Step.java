@@ -108,4 +108,11 @@ public abstract class Step {
         this.getWith().put("name", name);
         this.getWith().put("path", path);
     }
+
+    public void setupGitUser() {
+        if (getUses().isPresent() || getRun().isPresent()) {
+            throw new RuntimeException("Cannot setup git user when using 'uses' or 'run'");
+        }
+        this.getUses().set("fregante/setup-git-user@v2");
+    }
 }
