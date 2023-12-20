@@ -1,5 +1,6 @@
 package dev.lukebemish.managedversioning.actions;
 
+import dev.lukebemish.managedversioning.Constants;
 import org.gradle.api.Action;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.ListProperty;
@@ -104,7 +105,7 @@ public abstract class Step {
         if (getUses().isPresent() || getRun().isPresent()) {
             throw new RuntimeException("Cannot upload artifact when using 'uses' or 'run'");
         }
-        this.getUses().set("actions/upload-artifact@v3");
+        this.getUses().set(Constants.Versions.UPLOAD_ARTIFACT);
         this.getWith().put("name", name);
         this.getWith().put("path", path);
     }

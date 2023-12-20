@@ -148,17 +148,15 @@ public abstract class GitHubAction implements Configurable<GitHubAction> {
             job.getIf().set("${{ github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'success' }}");
             job.step(step -> {
                 step.getName().set("Checkout Artifact Sync");
-                step.getUses().set("actions/checkout@v4");
+                step.getUses().set(Constants.Versions.CHECKOUT);
                 step.getWith().put("repository", "lukebemish/artifact-sync");
                 step.getWith().put("ref", "refs/heads/main");
                 step.getWith().put("persist-credentials", false);
             });
-            job.step(step -> {
-                step.getRun().set("mkdir repo");
-            });
+            job.step(step -> step.getRun().set("mkdir repo"));
             job.step(step -> {
                 step.getName().set("Download Artifacts");
-                step.getUses().set("actions/github-script@v6");
+                step.getUses().set(Constants.Versions.GITHUB_SCRIPT);
                 step.getWith().put("script", getUnpackScript());
             });
             job.step(step -> {

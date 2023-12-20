@@ -55,7 +55,7 @@ public abstract class GradleJob {
         });
         job.step(step -> {
             step.getName().set("Checkout");
-            step.getUses().set("actions/checkout@v4");
+            step.getUses().set(Constants.Versions.CHECKOUT);
             step.getWith().put("fetch-depth", "0");
             if (readOnly) {
                 step.getWith().put("persist-credentials", "false");
@@ -65,9 +65,9 @@ public abstract class GradleJob {
             job.step(step -> {
                 step.getName().set("Cache");
                 if (readOnly) {
-                    step.getUses().set("actions/cache/restore@v3");
+                    step.getUses().set(Constants.Versions.CACHE_RESTORE);
                 } else {
-                    step.getUses().set("actions/cache@v3");
+                    step.getUses().set(Constants.Versions.CACHE_BOTH);
                 }
                 step.getWith().put("path", String.join("\n", getCachePaths().get()));
                 step.getWith().put("key", "${{ runner.os }}-gradle-${{ hashFiles('**/libs.versions.*', '**/*.gradle*', '**/gradle-wrapper.properties') }}");
@@ -111,7 +111,7 @@ public abstract class GradleJob {
         getGradleEnv().put(Constants.PR_NUMBER, "${{ github.event.pull_request.number }}");
         step(step -> {
             step.getName().set("Archive Publishable Artifacts");
-            step.getUses().set("actions/upload-artifact@v3");
+            step.getUses().set(Constants.Versions.UPLOAD_ARTIFACT);
             step.getWith().put("name", "artifacts");
             step.getWith().put("path", "build/repo");
         });

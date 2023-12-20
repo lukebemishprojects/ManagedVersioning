@@ -21,4 +21,15 @@ public final class Constants {
 
     public static final String CURSEFORGE_KEY = "CURSEFORGE_KEY";
     public static final String MODRINTH_KEY = "MODRINTH_KEY";
+
+    public static final class Versions {
+
+        public static final String UPLOAD_ARTIFACT = "actions/upload-artifact@v4";
+        public static final String CHECKOUT = "actions/checkout@v4";
+        public static final String GITHUB_SCRIPT = "actions/github-script@v7";
+        public static final String CACHE_RESTORE = "actions/cache/restore@v3";
+        public static final String CACHE_BOTH = "actions/cache@v3";
+
+        private Versions() {}
+    }
 }
