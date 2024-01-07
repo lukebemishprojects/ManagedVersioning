@@ -76,7 +76,7 @@ public abstract class ManagedPublishingExtension {
         }
     }
 
-    public void mavenPulLRequest(PublishingExtension publishing) {
+    public void mavenPullRequest(PublishingExtension publishing) {
         if (System.getenv(Constants.PR_NUMBER) != null) {
             publishing.repositories(repositories -> {
                 repositories.maven(maven -> {

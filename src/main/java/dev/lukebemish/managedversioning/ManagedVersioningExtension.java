@@ -51,8 +51,13 @@ public abstract class ManagedVersioningExtension {
             spec.getParameters().getArgs().set(List.of("rev-parse", "HEAD"));
             spec.getParameters().getWorkingDir().set(this.getGitWorkingDir());
         });
+        var tagName = project.getProviders().of(GitValueSource.class, spec -> {
+            spec.getParameters().getArgs().set(List.of("describe", "--tags", "--abbrev=0"));
+            spec.getParameters().getWorkingDir().set(this.getGitWorkingDir());
+        });
         this.tagHash = project.getProviders().of(GitValueSource.class, spec -> {
-            spec.getParameters().getArgs().set(List.of("rev-list", "--tags", "--max-count=1"));
+            spec.getParameters().getArgs().set(List.of("rev-list", "-n", "1"));
+            spec.getParameters().getArgs().add(tagName);
             spec.getParameters().getWorkingDir().set(this.getGitWorkingDir());
         });
         this.getTimestampFormat().convention("yyyy.MM.dd-HH.mm.ss");
