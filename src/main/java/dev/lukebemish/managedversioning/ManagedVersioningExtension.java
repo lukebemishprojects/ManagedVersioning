@@ -59,7 +59,7 @@ public abstract class ManagedVersioningExtension {
             spec.getParameters().getArgs().set(List.of("rev-list", "-n", "1"));
             spec.getParameters().getArgs().add(tagName);
             spec.getParameters().getWorkingDir().set(this.getGitWorkingDir());
-        });
+        }).map(s -> s.equals(gitHash.get()) ? "" : s);
         this.getTimestampFormat().convention("yyyy.MM.dd-HH.mm.ss");
         this.gitTimestamp = project.getProviders().of(GitValueSource.class, spec -> {
             spec.getParameters().getArgs().set(List.of("log", "-1", "--format=%at"));
