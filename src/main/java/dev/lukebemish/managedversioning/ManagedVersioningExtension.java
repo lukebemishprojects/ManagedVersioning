@@ -52,7 +52,7 @@ public abstract class ManagedVersioningExtension {
             spec.getParameters().getWorkingDir().set(this.getGitWorkingDir());
         });
         var tagName = project.getProviders().of(GitValueSource.class, spec -> {
-            spec.getParameters().getArgs().set(List.of("describe", "--tags", "--abbrev=0"));
+            spec.getParameters().getArgs().set(List.of("describe", "--tags", "--abbrev=0", "--always"));
             spec.getParameters().getWorkingDir().set(this.getGitWorkingDir());
         });
         this.tagHash = project.getProviders().of(GitValueSource.class, spec -> {
