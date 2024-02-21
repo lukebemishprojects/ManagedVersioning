@@ -107,6 +107,12 @@ public abstract class GradleJob {
         secret(name, name);
     }
 
+    public void secrets(String... names) {
+        for (String name : names) {
+            secret(name);
+        }
+    }
+
     public void pullRequestArtifact() {
         getGradleEnv().put(Constants.PR_NUMBER, "${{ github.event.pull_request.number }}");
         step(step -> {
