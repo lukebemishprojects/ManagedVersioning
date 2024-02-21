@@ -27,6 +27,13 @@ managedVersioning {
                     runsWith build
                 }
                 mavenRelease('github')
+                recordVersion('Record Version', 'version')
+            }
+            gradleJob {
+                name.set 'publish'
+                needs.add('build')
+                gradlew('Publish', 'publish')
+                tag.set('${{needs.build.outputs.version}}')
             }
         }
         build_pr {

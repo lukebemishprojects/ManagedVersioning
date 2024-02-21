@@ -19,12 +19,17 @@ public abstract class Job {
     @Nested
     public abstract ListProperty<Step> getSteps();
     @Input
+    public abstract ListProperty<String> getNeeds();
+    @Input
     public abstract Property<String> getRunsOn();
     @Input
     public abstract MapProperty<String, String> getPermissions();
     @Input
     @Optional
     public abstract Property<String> getIf();
+
+    @Input
+    public abstract MapProperty<String, String> getOutputs();
 
     private final ObjectFactory objectFactory;
 
@@ -48,8 +53,14 @@ public abstract class Job {
         if (this.getIf().isPresent()) {
             job.put("if", this.getIf().get());
         }
+        if (!this.getNeeds().get().isEmpty()) {
+            job.put("needs", this.getNeeds().get());
+        }
         if (!this.getPermissions().get().isEmpty()) {
             job.put("permissions", this.getPermissions().get());
+        }
+        if (!this.getOutputs().get().isEmpty()) {
+            job.put("outputs", this.getOutputs().get());
         }
         return job;
     }

@@ -3,6 +3,7 @@ package dev.lukebemish.managedversioning;
 import dev.lukebemish.managedversioning.actions.MakeActions;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.api.provider.Provider;
 import org.gradle.process.ExecOperations;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,14 +22,15 @@ public class ManagedVersioningPlugin implements Plugin<Project> {
             task.getVersion().set(extension.getVersion());
             task.getUpdatable().set(project.provider(() -> !extension.getUnstagedChanges().get() && !extension.getStagedChanges().get()));
         });
+        Provider<String> toTagVersion = project.provider(() -> {
+            var version = extension.getVersion().get();
+            if (extension.getMetadataVersion().isPresent()) {
+                version += "-" + extension.getMetadataVersion().get();
+            }
+            return version;
+        });
         project.getTasks().register("tagRelease", TagReleaseTask.class, task -> {
-            task.getVersion().set(project.provider(() -> {
-                var version = extension.getVersion().get();
-                if (extension.getMetadataVersion().isPresent()) {
-                    version += "-" + extension.getMetadataVersion().get();
-                }
-                return version;
-            }));
+            task.getVersion().set(toTagVersion);
             task.getUpToDate().set(extension.getTagUpToDate());
             task.getGitWorkingDir().set(extension.getGitWorkingDir().getAsFile().map(File::getPath));
             task.getUpdatable().set(project.provider(() -> !extension.getUnstagedChanges().get() && !extension.getStagedChanges().get()));
@@ -37,6 +39,10 @@ public class ManagedVersioningPlugin implements Plugin<Project> {
         project.getTasks().register("makeActions", MakeActions.class, task -> {
             task.getActionsDirectory().set(project.getLayout().getProjectDirectory().dir(".github").dir("workflows"));
             task.getGitHubActions().addAllLater(project.provider(extension::getGitHubActions));
+        });
+        project.getTasks().register("recordVersion", RecordVersionTask.class, task -> {
+            task.getVersion().set(toTagVersion);
+            task.getOutputFile().set(project.getLayout().getBuildDirectory().file("recordVersion.txt"));
         });
     }
 

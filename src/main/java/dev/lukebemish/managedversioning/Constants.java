@@ -25,6 +25,7 @@ public final class Constants {
     public static final class Versions {
 
         public static final String UPLOAD_ARTIFACT = "actions/upload-artifact@v4";
+        public static final String DOWNLOAD_ARTIFACT = "actions/download-artifact@v4";
         public static final String CHECKOUT = "actions/checkout@v4";
         public static final String GITHUB_SCRIPT = "actions/github-script@v7";
         public static final String CACHE_RESTORE = "actions/cache/restore@v4";

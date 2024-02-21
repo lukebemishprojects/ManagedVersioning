@@ -93,6 +93,20 @@ public abstract class Step {
         return this;
     }
 
+    public void uploadArtifact(String name, String... paths) {
+        getName().set("Upload Artifact");
+        getUses().set(Constants.Versions.UPLOAD_ARTIFACT);
+        getWith().put("name", name);
+        getWith().put("path", paths);
+    }
+
+    public void downloadArtifact(String name, String path) {
+        getName().set("Download Artifact");
+        getUses().set(Constants.Versions.DOWNLOAD_ARTIFACT);
+        getWith().put("name", name);
+        getWith().put("path", path);
+    }
+
     public void secret(String alias, String name) {
         getEnv().put(alias, "${{ secrets."+name+" }}");
     }

@@ -7,6 +7,7 @@ import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.Optional;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -25,6 +26,14 @@ public abstract class GradleJob {
     public abstract ListProperty<Step> getSteps();
     @Input
     public abstract MapProperty<String, String> getGradleEnv();
+    @Input
+    public abstract MapProperty<String, String> getOutputs();
+    @Input
+    public abstract ListProperty<String> getNeeds();
+
+    @Input
+    @Optional
+    public abstract Property<String> getTag();
 
     private final ObjectFactory objectFactory;
     @Inject
@@ -46,6 +55,8 @@ public abstract class GradleJob {
         Job job = objectFactory.newInstance(Job.class, objectFactory);
         boolean readOnly = getReadOnly().get();
         job.getName().set(getName().get());
+        job.getOutputs().set(getOutputs());
+        job.getNeeds().set(getNeeds());
         if (!readOnly) {
             job.getPermissions().put("contents", "write");
         }
@@ -57,6 +68,9 @@ public abstract class GradleJob {
             step.getName().set("Checkout");
             step.getUses().set(Constants.Versions.CHECKOUT);
             step.getWith().put("fetch-depth", "0");
+            if (getTag().isPresent()) {
+                step.getWith().put("ref", "refs/tags/"+getTag().get());
+            }
             if (readOnly) {
                 step.getWith().put("persist-credentials", "false");
             }
@@ -121,6 +135,17 @@ public abstract class GradleJob {
             step.getWith().put("name", "artifacts");
             step.getWith().put("path", "build/repo");
         });
+    }
+
+    public void recordVersion(String name, String outputName) {
+        gradlew(name, "recordVersion");
+        String captureId = name.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]", "_")+"_capture_version";
+        step(step -> {
+            step.getName().set("Capture Recorded Version");
+            step.getId().set(captureId);
+            step.getRun().set("echo version=$(cat build/recordVersion.txt) >> \"$GITHUB_OUTPUT\"");
+        });
+        getOutputs().put(outputName, "${{ steps."+captureId+".outputs.version }}");
     }
 
     public void mavenSnapshot(String user) {
