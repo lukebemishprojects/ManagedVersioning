@@ -50,11 +50,23 @@ public abstract class VersionValueSource implements ValueSource<String, VersionV
         if (fileVersion.equals(lastTagVersion)) {
             if (!lastTagHash.equals(getParameters().getCommitHash().get())) {
                 var noMetaParts = version.toString().split("-");
-                var noBuildParts = noMetaParts[0].split("\\+");
-                var mainParts = noBuildParts[0].split("\\.");
+                int lastMetaNumber = 0;
+                for (int i = 0; i < noMetaParts.length; i++) {
+                    if (noMetaParts[i].matches(".*\\.\\d+.*")) {
+                        lastMetaNumber = i;
+                    }
+                }
+                var noBuildParts = noMetaParts[lastMetaNumber].split("\\+");
+                int lastBuildNumber = 0;
+                for (int i = 0; i < noBuildParts.length; i++) {
+                    if (noBuildParts[i].matches(".*\\.\\d+.*")) {
+                        lastBuildNumber = i;
+                    }
+                }
+                var mainParts = noBuildParts[lastBuildNumber].split("\\.");
                 mainParts[mainParts.length-1] = Integer.toString(Integer.parseInt(mainParts[mainParts.length-1])+1);
-                noBuildParts[0] = String.join(".", mainParts);
-                noMetaParts[0] = String.join("+", noBuildParts);
+                noBuildParts[lastBuildNumber] = String.join(".", mainParts);
+                noMetaParts[lastMetaNumber] = String.join("+", noBuildParts);
                 version = new StringBuilder(String.join("-", noMetaParts));
             }
         }
