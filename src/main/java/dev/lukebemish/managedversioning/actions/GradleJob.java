@@ -76,7 +76,7 @@ public abstract class GradleJob {
         }
         job.step(step -> {
             step.getName().set("Setup Gradle");
-            step.getUses().set("gradle/gradle-build-action@v2");
+            step.getUses().set(Constants.Versions.GRADLE);
             if (readOnly) {
                 step.getWith().put("cache-read-only", true);
             }

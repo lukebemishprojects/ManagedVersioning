@@ -114,6 +114,6 @@ public abstract class Step {
         if (getUses().isPresent() || getRun().isPresent()) {
             throw new RuntimeException("Cannot setup git user when using 'uses' or 'run'");
         }
-        this.getUses().set("fregante/setup-git-user@v2");
+        this.getUses().set(Constants.Versions.SETUP_GIT_USER);
     }
 }

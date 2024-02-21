@@ -27,8 +27,11 @@ public final class Constants {
         public static final String UPLOAD_ARTIFACT = "actions/upload-artifact@v4";
         public static final String CHECKOUT = "actions/checkout@v4";
         public static final String GITHUB_SCRIPT = "actions/github-script@v7";
-        public static final String CACHE_RESTORE = "actions/cache/restore@v3";
-        public static final String CACHE_BOTH = "actions/cache@v3";
+        public static final String CACHE_RESTORE = "actions/cache/restore@v4";
+        public static final String CACHE_BOTH = "actions/cache@v4";
+        public static final String GRADLE = "gradle/gradle-build-action@v3";
+        public static final String TEST_REPORTER = "dorny/test-reporter@v1";
+        public static final String SETUP_GIT_USER = "fregante/setup-git-user@v2";
 
         private Versions() {}
     }

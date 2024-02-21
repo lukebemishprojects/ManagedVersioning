@@ -15,7 +15,7 @@ jobs:
               with:
                   fetch-depth: 0
             - uses: fregante/setup-git-user@v2
-            - uses: gradle/gradle-build-action@v2
+            - uses: gradle/gradle-build-action@v3
               name: Setup Gradle
             - name: Capture Version
               run: |
@@ -26,7 +26,7 @@ jobs:
               id: "tag_create"
               with:
                   tag: ${{ env.captured_version }}
-            - uses: gradle/gradle-build-action@v2
+            - uses: gradle/gradle-build-action@v3
               with:
                   arguments: build publish
                   cache-read-only: ${{ !startsWith(github.ref, 'refs/heads/1.') }}

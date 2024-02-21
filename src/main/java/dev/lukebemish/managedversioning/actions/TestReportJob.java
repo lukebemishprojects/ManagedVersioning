@@ -1,5 +1,6 @@
 package dev.lukebemish.managedversioning.actions;
 
+import dev.lukebemish.managedversioning.Constants;
 import org.gradle.api.Action;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.ListProperty;
@@ -40,7 +41,7 @@ public abstract class TestReportJob {
     public Step junit(String name, String path, String artifact) {
         return step(step -> {
             step.getName().set(name.isBlank() ? "JUnit Test Report" : "JUnit Test Report - " + name);
-            step.getUses().set("dorny/test-reporter@v1");
+            step.getUses().set(Constants.Versions.TEST_REPORTER);
             step.getWith().put("name", name.isBlank() ? "Test Results" : "Test Results - " + name);
             step.getWith().put("artifact", artifact);
             step.getWith().put("path", path);
