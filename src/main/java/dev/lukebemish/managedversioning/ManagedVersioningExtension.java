@@ -13,6 +13,7 @@ import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Optional;
 
+import java.io.File;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Collections;
@@ -39,6 +40,7 @@ public abstract class ManagedVersioningExtension {
     public abstract Property<String> getStagedChangesVersionSuffix();
     public abstract Property<String> getUnstagedChangesVersionSuffix();
     public abstract ListProperty<String> getSuffixParts();
+    public abstract Property<Boolean> getMakeUpdateTasks();
 
     public ManagedVersioningExtension(Project project) {
         this.project = project;
@@ -94,6 +96,7 @@ public abstract class ManagedVersioningExtension {
             ps.getStagedChanges().set(this.stagedChanges);
             ps.getUnstagedChanges().set(this.unstagedChanges);
         });
+        this.getMakeUpdateTasks().convention(project == project.getRootProject());
     }
 
     public ManagedPublishingExtension getPublishing() {
@@ -107,6 +110,34 @@ public abstract class ManagedVersioningExtension {
 
     public void apply() {
         project.setVersion(version.get());
+
+        if (getMakeUpdateTasks().get()) {
+            var updateVersioning = project.getTasks().register("updateVersioning", UpdateVersioningTask.class, task -> {
+                task.getVersionFile().set(this.getVersionFile().get().getAsFile().getAbsolutePath());
+                task.getUpToDate().set(this.getVersionUpToDate());
+                task.getGitWorkingDir().set(this.getGitWorkingDir().getAsFile().map(File::getPath));
+                task.getVersion().set(this.getVersion());
+                task.getUpdatable().set(project.provider(() -> !this.getUnstagedChanges().get() && !this.getStagedChanges().get()));
+            });
+            Provider<String> toTagVersion = project.provider(() -> {
+                var version = this.getVersion().get();
+                if (this.getMetadataVersion().isPresent()) {
+                    version += "-" + this.getMetadataVersion().get();
+                }
+                return version;
+            });
+            project.getTasks().register("tagRelease", TagReleaseTask.class, task -> {
+                task.getVersion().set(toTagVersion);
+                task.getUpToDate().set(this.getTagUpToDate());
+                task.getGitWorkingDir().set(this.getGitWorkingDir().getAsFile().map(File::getPath));
+                task.getUpdatable().set(project.provider(() -> !this.getUnstagedChanges().get() && !this.getStagedChanges().get()));
+                task.dependsOn(updateVersioning);
+            });
+            project.getTasks().register("recordVersion", RecordVersionTask.class, task -> {
+                task.getVersion().set(toTagVersion);
+                task.getOutputFile().set(project.getLayout().getBuildDirectory().file("recordVersion.txt"));
+            });
+        }
     }
 
     public Provider<String> getVersion() {
