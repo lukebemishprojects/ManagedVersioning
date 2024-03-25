@@ -109,35 +109,41 @@ public abstract class ManagedVersioningExtension {
     public abstract NamedDomainObjectContainer<GitHubAction> getGitHubActions();
 
     public void apply() {
-        project.setVersion(version.get());
+        project.setVersion(new Object() {
+            @Override
+            public String toString() {
+                return version.get();
+            }
+        });
 
-        if (getMakeUpdateTasks().get()) {
-            var updateVersioning = project.getTasks().register("updateVersioning", UpdateVersioningTask.class, task -> {
-                task.getVersionFile().set(this.getVersionFile().get().getAsFile().getAbsolutePath());
-                task.getUpToDate().set(this.getVersionUpToDate());
-                task.getGitWorkingDir().set(this.getGitWorkingDir().getAsFile().map(File::getPath));
-                task.getVersion().set(this.getVersion());
-                task.getUpdatable().set(project.provider(() -> !this.getUnstagedChanges().get() && !this.getStagedChanges().get()));
-            });
-            Provider<String> toTagVersion = project.provider(() -> {
-                var version = this.getVersion().get();
-                if (this.getMetadataVersion().isPresent()) {
-                    version += "-" + this.getMetadataVersion().get();
-                }
-                return version;
-            });
-            project.getTasks().register("tagRelease", TagReleaseTask.class, task -> {
-                task.getVersion().set(toTagVersion);
-                task.getUpToDate().set(this.getTagUpToDate());
-                task.getGitWorkingDir().set(this.getGitWorkingDir().getAsFile().map(File::getPath));
-                task.getUpdatable().set(project.provider(() -> !this.getUnstagedChanges().get() && !this.getStagedChanges().get()));
-                task.dependsOn(updateVersioning);
-            });
-            project.getTasks().register("recordVersion", RecordVersionTask.class, task -> {
-                task.getVersion().set(toTagVersion);
-                task.getOutputFile().set(project.getLayout().getBuildDirectory().file("recordVersion.txt"));
-            });
-        }
+        var updateVersioning = project.getTasks().register("updateVersioning", UpdateVersioningTask.class, task -> {
+            task.getVersionFile().set(this.getVersionFile().get().getAsFile().getAbsolutePath());
+            task.getUpToDate().set(this.getVersionUpToDate());
+            task.getGitWorkingDir().set(this.getGitWorkingDir().getAsFile().map(File::getPath));
+            task.getVersion().set(this.getVersion());
+            task.getUpdatable().set(project.provider(() -> !this.getUnstagedChanges().get() && !this.getStagedChanges().get()));
+            task.onlyIf(t -> getMakeUpdateTasks().get());
+        });
+        Provider<String> toTagVersion = project.provider(() -> {
+            var version = this.getVersion().get();
+            if (this.getMetadataVersion().isPresent()) {
+                version += "-" + this.getMetadataVersion().get();
+            }
+            return version;
+        });
+        project.getTasks().register("tagRelease", TagReleaseTask.class, task -> {
+            task.getVersion().set(toTagVersion);
+            task.getUpToDate().set(this.getTagUpToDate());
+            task.getGitWorkingDir().set(this.getGitWorkingDir().getAsFile().map(File::getPath));
+            task.getUpdatable().set(project.provider(() -> !this.getUnstagedChanges().get() && !this.getStagedChanges().get()));
+            task.dependsOn(updateVersioning);
+            task.onlyIf(t -> getMakeUpdateTasks().get());
+        });
+        project.getTasks().register("recordVersion", RecordVersionTask.class, task -> {
+            task.getVersion().set(toTagVersion);
+            task.getOutputFile().set(project.getLayout().getBuildDirectory().file("recordVersion.txt"));
+            task.onlyIf(t -> getMakeUpdateTasks().get());
+        });
     }
 
     public Provider<String> getVersion() {

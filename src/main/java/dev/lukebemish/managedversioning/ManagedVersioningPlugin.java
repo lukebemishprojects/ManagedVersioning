@@ -16,6 +16,7 @@ public class ManagedVersioningPlugin implements Plugin<Project> {
         project.getTasks().register("makeActions", MakeActions.class, task -> {
             task.getActionsDirectory().set(project.getLayout().getProjectDirectory().dir(".github").dir("workflows"));
             task.getGitHubActions().addAllLater(project.provider(extension::getGitHubActions));
+            task.onlyIf(t -> !extension.getGitHubActions().isEmpty());
         });
     }
 
