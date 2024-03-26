@@ -5,6 +5,7 @@ import io.github.gradlenexus.publishplugin.NexusPublishPlugin;
 import org.gradle.api.Project;
 import org.gradle.api.publish.Publication;
 import org.gradle.api.publish.PublishingExtension;
+import org.gradle.api.publish.maven.MavenPublication;
 import org.gradle.plugins.signing.SigningExtension;
 
 import javax.inject.Inject;
@@ -17,6 +18,7 @@ public abstract class ManagedPublishingExtension {
     @Inject
     public ManagedPublishingExtension(Project project) {
         this.project = project;
+        this.licenses = new Licenses();
     }
 
     public void mavenCentral() {
@@ -94,5 +96,52 @@ public abstract class ManagedPublishingExtension {
                 signing.sign(publication);
             }
         }
+    }
+
+    public void sign(SigningExtension signing, PublishingExtension publishing) {
+        if (System.getenv(Constants.GPG_KEY) != null) {
+            signing.useInMemoryPgpKeys(System.getenv(Constants.GPG_KEY), System.getenv(Constants.GPG_PASSWORD));
+            publishing.getPublications().all(signing::sign);
+        }
+    }
+
+    public static class Licenses {
+        protected Licenses() {}
+
+        public final String bsd3 = "BSD-3-Clause";
+        public final String lgpl3 = "LGPL-3.0-or-later";
+    }
+
+    public final Licenses licenses;
+
+    public void pom(Publication publication, String repo, String license) {
+        if (!(publication instanceof MavenPublication maven)) {
+            throw new IllegalArgumentException("Publication must be a MavenPublication");
+        }
+        maven.pom(pom -> {
+            pom.scm(scm -> {
+                scm.getConnection().set("scm:git:git://github.com/lukebemishprojects/"+repo+".git");
+                scm.getUrl().set("https://github.com/lukebemishprojects/"+repo);
+            });
+            pom.developers(developers -> {
+                developers.developer(developer -> {
+                    developer.getId().set("lukebemish");
+                    developer.getName().set("Luke Bemish");
+                    developer.getEmail().set("lukebemish@lukebemish.dev");
+                    developer.getUrl().set("https://github.com/lukebemish");
+                });
+            });
+            pom.issueManagement(issues -> {
+                issues.getUrl().set("https://github.com/lukebemishprojects/"+repo+"/issues");
+            });
+            pom.setPackaging("jar");
+            pom.getUrl().set("https://github.com/lukebemishprojects/"+repo);
+            pom.licenses(licenses -> {
+                licenses.license(l -> {
+                    l.getUrl().set("https://spdx.org/licenses/"+license);
+                    l.getName().set(license);
+                });
+            });
+        });
     }
 }
