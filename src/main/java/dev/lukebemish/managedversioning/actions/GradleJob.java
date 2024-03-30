@@ -42,6 +42,7 @@ public abstract class GradleJob {
         getJavaVersion().convention("17");
         getReadOnly().convention(true);
         getCachePaths().add("**/.gradle/loom-cache");
+        getCachePaths().add("**/.gradle/quilt-loom-cache");
     }
 
     public Step step(Action<Step> action) {
