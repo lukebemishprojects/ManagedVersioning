@@ -26,6 +26,9 @@ public abstract class Step {
     @Optional
     @Input
     public abstract Property<String> getRun();
+    @Optional
+    @Input
+    public abstract Property<String> getWorkingDirectory();
     @Input
     public abstract MapProperty<String, String> getEnv();
     @Input
@@ -84,6 +87,9 @@ public abstract class Step {
             if (!with.isEmpty()) {
                 step.put("with", with);
             }
+        }
+        if (this.getWorkingDirectory().isPresent()) {
+            step.put("working-directory", this.getWorkingDirectory().get());
         }
         return step;
     }
