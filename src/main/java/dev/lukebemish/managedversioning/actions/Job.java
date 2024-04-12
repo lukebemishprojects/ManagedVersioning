@@ -40,9 +40,14 @@ public abstract class Job {
     }
 
     public Step step(Action<Step> action) {
+        Step step = configureStep(action);
+        this.getSteps().add(step);
+        return step;
+    }
+
+    protected Step configureStep(Action<Step> action) {
         Step step = objectFactory.newInstance(Step.class, objectFactory);
         action.execute(step);
-        this.getSteps().add(step);
         return step;
     }
 
@@ -63,10 +68,5 @@ public abstract class Job {
             job.put("outputs", this.getOutputs().get());
         }
         return job;
-    }
-
-    public Job configure(Action<Job> action) {
-        action.execute(this);
-        return this;
     }
 }

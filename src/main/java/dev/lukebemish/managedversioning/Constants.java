@@ -27,6 +27,8 @@ public final class Constants {
         public static final String UPLOAD_ARTIFACT = "actions/upload-artifact@v4";
         public static final String DOWNLOAD_ARTIFACT = "actions/download-artifact@v4";
         public static final String CHECKOUT = "actions/checkout@v4";
+        public static final String WRAPPER_VALIDATION = "gradle/wrapper-validation-action@v2";
+        public static final String DEPENDENCY_SUBMISSION = "mikepenz/gradle-dependency-submission@v0.9.0";
         public static final String GITHUB_SCRIPT = "actions/github-script@v7";
         public static final String CACHE_RESTORE = "actions/cache/restore@v4";
         public static final String CACHE_BOTH = "actions/cache@v4";

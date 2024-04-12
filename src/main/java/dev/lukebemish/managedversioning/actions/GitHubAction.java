@@ -58,15 +58,14 @@ public abstract class GitHubAction implements Configurable<GitHubAction> {
         return job;
     }
 
-    public Job gradleJob(Action<GradleJob> action) {
+    public GradleJob gradleJob(Action<GradleJob> action) {
         GradleJob gradleJob = objectFactory.newInstance(GradleJob.class, objectFactory);
         action.execute(gradleJob);
-        Job job = gradleJob.create();
-        this.getJobs().add(job);
-        return job;
+        this.getJobs().add(gradleJob);
+        return gradleJob;
     }
 
-    public Job gradleJob(
+    public GradleJob gradleJob(
         @DelegatesTo(value = GradleJob.class, strategy = Closure.DELEGATE_FIRST)
         @ClosureParams(value = SimpleType.class, options = "dev.lukebemish.managedversioning.actions.GradleJob")
         Closure<?> closure
@@ -75,9 +74,8 @@ public abstract class GitHubAction implements Configurable<GitHubAction> {
         closure.setDelegate(gradleJob);
         closure.setResolveStrategy(Closure.DELEGATE_FIRST);
         closure.call(gradleJob);
-        Job job = gradleJob.create();
-        this.getJobs().add(job);
-        return job;
+        this.getJobs().add(gradleJob);
+        return gradleJob;
     }
 
     public Job testReportJob(Action<TestReportJob> action) {
