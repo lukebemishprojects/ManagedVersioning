@@ -60,12 +60,6 @@ public abstract class GradleJob extends Job {
         return step;
     }
 
-    public Step push() {
-        return step(step -> {
-            step.getRun().set("'git push && git push --tags'");
-        });
-    }
-
     public Step dependencySubmission(Action<DependencySubmission> action) {
         DependencySubmission dependencySubmission = objectFactory.newInstance(DependencySubmission.class);
         action.execute(dependencySubmission);

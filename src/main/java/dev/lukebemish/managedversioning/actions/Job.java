@@ -52,6 +52,12 @@ public abstract class Job {
         });
     }
 
+    public Step push() {
+        return step(step -> {
+            step.getRun().set("git push && git push --tags");
+        });
+    }
+
     protected Step configureStep(Action<Step> action) {
         Step step = objectFactory.newInstance(Step.class, objectFactory);
         action.execute(step);
