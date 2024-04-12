@@ -128,8 +128,8 @@ public abstract class GradleJob extends Job {
         getSteps().addAll(earlyStepProvider);
         this.getPermissions().putAll(getProviders().provider(() -> {
             Map<String, String> permissions = new HashMap<>();
-            if (getReadOnly().get()) {
-                permissions.put("contents", "read");
+            if (!getReadOnly().get()) {
+                permissions.put("contents", "write");
             }
             return permissions;
         }));

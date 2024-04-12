@@ -1,5 +1,6 @@
 package dev.lukebemish.managedversioning.actions;
 
+import dev.lukebemish.managedversioning.Constants;
 import org.gradle.api.Action;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.ListProperty;
@@ -43,6 +44,12 @@ public abstract class Job {
         Step step = configureStep(action);
         this.getSteps().add(step);
         return step;
+    }
+
+    public void setupGitUser() {
+        step(step -> {
+            step.getUses().set(Constants.Versions.SETUP_GIT_USER);
+        });
     }
 
     protected Step configureStep(Action<Step> action) {
