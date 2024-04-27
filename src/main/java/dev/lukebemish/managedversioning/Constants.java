@@ -10,6 +10,9 @@ public final class Constants {
     public static final String RELEASE_MAVEN_PASSWORD = "RELEASE_MAVEN_PASSWORD";
     public static final String RELEASE_MAVEN_URL = "RELEASE_MAVEN_URL";
     public static final String RELEASE_MAVEN_USER = "RELEASE_MAVEN_USER";
+    public static final String STAGING_MAVEN_PASSWORD = "STAGING_MAVEN_PASSWORD";
+    public static final String STAGING_MAVEN_URL = "STAGING_MAVEN_URL";
+    public static final String STAGING_MAVEN_USER = "STAGING_MAVEN_USER";
     public static final String PR_MAVEN_PASSWORD = "PR_MAVEN_PASSWORD";
     public static final String CENTRAL_PASSWORD = "SONATYPE_PASSWORD";
     public static final String CENTRAL_USER = "SONATYPE_USER";

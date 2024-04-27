@@ -210,6 +210,12 @@ public abstract class GradleJob extends Job {
         secret(Constants.CENTRAL_USER);
     }
 
+    public void mavenStaging(String user) {
+        secret(Constants.STAGING_MAVEN_PASSWORD);
+        getGradleEnv().put(Constants.STAGING_MAVEN_USER, user);
+        getGradleEnv().put(Constants.STAGING_MAVEN_URL, "https://maven.lukebemish.dev/staging/");
+    }
+
     public void pluginPortal() {
         secret("GRADLE_PUBLISH_KEY", "GRADLE_PLUGIN_KEY");
         secret("GRADLE_PUBLISH_SECRET", "GRADLE_PLUGIN_SECRET");

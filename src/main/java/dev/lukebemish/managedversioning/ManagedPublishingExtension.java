@@ -78,6 +78,25 @@ public abstract class ManagedPublishingExtension {
         }
     }
 
+    public void mavenStaging(PublishingExtension publishing) {
+        if (System.getenv(Constants.STAGING_MAVEN_URL) != null) {
+            publishing.repositories(repositories -> {
+                repositories.maven(maven -> {
+                    maven.setName("StagingMaven");
+                    try {
+                        maven.setUrl(new URI(System.getenv(Constants.STAGING_MAVEN_URL)));
+                    } catch (URISyntaxException e) {
+                        throw new RuntimeException(e);
+                    }
+                    maven.credentials(cred -> {
+                        cred.setUsername(System.getenv(Constants.STAGING_MAVEN_USER));
+                        cred.setPassword(System.getenv(Constants.STAGING_MAVEN_PASSWORD));
+                    });
+                });
+            });
+        }
+    }
+
     public void mavenPullRequest(PublishingExtension publishing) {
         if (System.getenv(Constants.PR_NUMBER) != null) {
             publishing.repositories(repositories -> {
