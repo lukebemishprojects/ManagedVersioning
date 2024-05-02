@@ -33,9 +33,7 @@ managedVersioning {
                 name.set 'publish'
                 needs.add('build')
                 gradlew('Publish', 'publish')
-                dependencySubmission {
-                    projects(allprojects)
-                }
+                dependencySubmission()
                 tag.set('${{needs.build.outputs.version}}')
             }
         }

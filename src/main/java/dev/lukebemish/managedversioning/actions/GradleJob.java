@@ -60,17 +60,11 @@ public abstract class GradleJob extends Job {
         return step;
     }
 
-    public Step dependencySubmission(Action<DependencySubmission> action) {
-        DependencySubmission dependencySubmission = objectFactory.newInstance(DependencySubmission.class);
-        action.execute(dependencySubmission);
+    public Step dependencySubmission() {
         return step(step -> {
             step.getName().set("Submit Dependencies");
             step.getEnv().putAll(getGradleEnv());
             step.getUses().set(Constants.Versions.DEPENDENCY_SUBMISSION);
-            step.getWith().put("gradle-build-module", String.join("\n", dependencySubmission.getBuildModules().get()));
-            step.getWith().put("gradle-build-configuration", dependencySubmission.getBuildConfiguration().get());
-            step.getWith().put("sub-module-mode", dependencySubmission.getSubModuleMode().get());
-            step.getWith().put("include-build-environment", dependencySubmission.getIncludeBuildEnvironment().get());
         });
     }
 
