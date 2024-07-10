@@ -7,6 +7,7 @@ import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.Optional;
 
 import javax.inject.Inject;
@@ -37,6 +38,9 @@ public abstract class Step {
     public abstract Property<Boolean> getRunsOnError();
     @Input
     public abstract ListProperty<String> getRequiredSteps();
+    @Input
+    @Nested
+    public abstract MapProperty<String, Object> getParameters();
 
     private final ObjectFactory objectFactory;
 
@@ -86,6 +90,12 @@ public abstract class Step {
             var with = this.getWith().get();
             if (!with.isEmpty()) {
                 step.put("with", with);
+            }
+        }
+        if (this.getParameters().isPresent()) {
+            var parameters = this.getParameters().get();
+            if (!parameters.isEmpty()) {
+                step.putAll(parameters);
             }
         }
         if (this.getWorkingDirectory().isPresent()) {

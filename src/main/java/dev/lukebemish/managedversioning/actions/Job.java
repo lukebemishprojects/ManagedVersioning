@@ -28,9 +28,11 @@ public abstract class Job {
     @Input
     @Optional
     public abstract Property<String> getIf();
-
     @Input
     public abstract MapProperty<String, String> getOutputs();
+    @Input
+    @Nested
+    public abstract MapProperty<String, Object> getParameters();
 
     private final ObjectFactory objectFactory;
 
@@ -79,6 +81,12 @@ public abstract class Job {
         }
         if (!this.getOutputs().get().isEmpty()) {
             job.put("outputs", this.getOutputs().get());
+        }
+        if (this.getParameters().isPresent()) {
+            var parameters = this.getParameters().get();
+            if (!parameters.isEmpty()) {
+                job.putAll(parameters);
+            }
         }
         return job;
     }
