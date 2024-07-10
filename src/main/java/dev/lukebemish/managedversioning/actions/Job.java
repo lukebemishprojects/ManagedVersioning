@@ -30,7 +30,6 @@ public abstract class Job {
     public abstract Property<String> getIf();
     @Input
     public abstract MapProperty<String, String> getOutputs();
-    @Input
     @Nested
     public abstract MapProperty<String, Object> getParameters();
 

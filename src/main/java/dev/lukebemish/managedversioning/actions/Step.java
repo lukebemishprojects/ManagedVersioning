@@ -38,7 +38,6 @@ public abstract class Step {
     public abstract Property<Boolean> getRunsOnError();
     @Input
     public abstract ListProperty<String> getRequiredSteps();
-    @Input
     @Nested
     public abstract MapProperty<String, Object> getParameters();
 
