@@ -122,7 +122,7 @@ public abstract class ManagedVersioningExtension {
             task.getGitWorkingDir().set(this.getGitWorkingDir().getAsFile().map(File::getPath));
             task.getVersion().set(this.getVersion());
             task.getUpdatable().set(project.provider(() -> !this.getUnstagedChanges().get() && !this.getStagedChanges().get()));
-            var getMakeUpdateTasks = getMakeUpdateTasks();
+            var makeUpdateTasks = getMakeUpdateTasks();
             task.onlyIf(t -> makeUpdateTasks.get());
         });
         Provider<String> toTagVersion = project.provider(() -> {
@@ -138,13 +138,13 @@ public abstract class ManagedVersioningExtension {
             task.getGitWorkingDir().set(this.getGitWorkingDir().getAsFile().map(File::getPath));
             task.getUpdatable().set(project.provider(() -> !this.getUnstagedChanges().get() && !this.getStagedChanges().get()));
             task.dependsOn(updateVersioning);
-            var getMakeUpdateTasks = getMakeUpdateTasks();
+            var makeUpdateTasks = getMakeUpdateTasks();
             task.onlyIf(t -> makeUpdateTasks.get());
         });
         project.getTasks().register("recordVersion", RecordVersionTask.class, task -> {
             task.getVersion().set(toTagVersion);
             task.getOutputFile().set(project.getLayout().getBuildDirectory().file("recordVersion.txt"));
-            var getMakeUpdateTasks = getMakeUpdateTasks();
+            var makeUpdateTasks = getMakeUpdateTasks();
             task.onlyIf(t -> makeUpdateTasks.get());
         });
     }
