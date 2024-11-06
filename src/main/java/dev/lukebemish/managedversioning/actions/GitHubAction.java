@@ -154,7 +154,7 @@ public abstract class GitHubAction implements Configurable<GitHubAction> {
             job.step(step -> step.getRun().set("mkdir repo"));
             job.step(step -> {
                 step.getName().set("Download Artifacts");
-                step.getId()().set("download_artifacts");
+                step.getId().set("download_artifacts");
                 step.getUses().set(Constants.Versions.GITHUB_SCRIPT);
                 step.getWith().put("script", getUnpackScript());
             });
