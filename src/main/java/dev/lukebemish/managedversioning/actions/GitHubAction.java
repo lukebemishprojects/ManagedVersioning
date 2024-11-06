@@ -154,6 +154,7 @@ public abstract class GitHubAction implements Configurable<GitHubAction> {
             job.step(step -> step.getRun().set("mkdir repo"));
             job.step(step -> {
                 step.getName().set("Download Artifacts");
+                step.getId()().set("download_artifacts");
                 step.getUses().set(Constants.Versions.GITHUB_SCRIPT);
                 step.getWith().put("script", getUnpackScript());
             });
@@ -167,7 +168,7 @@ public abstract class GitHubAction implements Configurable<GitHubAction> {
                 step.getEnv().put("MAVEN_USER", user);
                 step.secret("MAVEN_PASSWORD", Constants.PR_MAVEN_PASSWORD);
                 step.getEnv().put("MAVEN_URL", "https://maven.lukebemish.dev/pullrequests/");
-                step.getEnv().put("ALLOWED_VERSION", "*-pr${{ github.event.workflow_run.pull_requests[0].number }}");
+                step.getEnv().put("ALLOWED_VERSION", "*-pr${{ steps.download_artifacts.outputs.result }}");
                 step.getEnv().put("ALLOWED_PATHS", paths);
             });
         });
@@ -175,10 +176,16 @@ public abstract class GitHubAction implements Configurable<GitHubAction> {
 
     private String getUnpackScript() {
         return """
-            const pull_requests = ${{ toJSON(github.event.workflow_run.pull_requests) }};
-            if (!pull_requests.length) {
-              return core.error("This workflow doesn't match any pull requests!");
+            const response = await github.rest.search.issuesAndPullRequests({
+                q: 'repo:${{ github.repository }} is:pr sha:${{ github.event.workflow_run.head_sha }}',
+                per_page: 1,
+            })
+            const items = response.data.items
+            if (items.length < 1) {
+                console.error('No PRs found')
+                return
             }
+            const pullRequestNumber = items[0].number
             let allArtifacts = await github.rest.actions.listWorkflowRunArtifacts({
                owner: context.repo.owner,
                repo: context.repo.repo,
@@ -195,5 +202,6 @@ public abstract class GitHubAction implements Configurable<GitHubAction> {
             });
             let fs = require('fs');
             fs.writeFileSync(`${process.env.GITHUB_WORKSPACE}/repo.zip`, Buffer.from(download.data));""";
+            return pullRequestNumber
     }
 }
