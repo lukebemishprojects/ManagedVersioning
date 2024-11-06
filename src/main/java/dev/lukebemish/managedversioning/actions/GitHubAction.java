@@ -201,7 +201,7 @@ public abstract class GitHubAction implements Configurable<GitHubAction> {
                archive_format: 'zip',
             });
             let fs = require('fs');
-            fs.writeFileSync(`${process.env.GITHUB_WORKSPACE}/repo.zip`, Buffer.from(download.data));""";
-            return pullRequestNumber
+            fs.writeFileSync(`${process.env.GITHUB_WORKSPACE}/repo.zip`, Buffer.from(download.data));
+            return pullRequestNumber;""";
     }
 }
