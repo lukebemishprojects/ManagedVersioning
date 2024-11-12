@@ -4,7 +4,7 @@ plugins {
 }
 
 group = 'dev.lukebemish'
-version = '1.2.25'
+version = '1.2.26'
 
 repositories {
     mavenCentral()
