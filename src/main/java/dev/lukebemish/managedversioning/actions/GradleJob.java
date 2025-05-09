@@ -1,14 +1,22 @@
 package dev.lukebemish.managedversioning.actions;
 
 import dev.lukebemish.managedversioning.Constants;
+import dev.lukebemish.managedversioning.impl.Unit;
 import org.gradle.api.Action;
 import org.gradle.api.model.ObjectFactory;
-import org.gradle.api.provider.*;
+import org.gradle.api.provider.ListProperty;
+import org.gradle.api.provider.MapProperty;
+import org.gradle.api.provider.Property;
+import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Optional;
 
 import javax.inject.Inject;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 public abstract class GradleJob extends Job {
     @Input
@@ -34,15 +42,12 @@ public abstract class GradleJob extends Job {
     @Optional
     public abstract Property<String> getTag();
 
-    private final ObjectFactory objectFactory;
+    @Inject
+    protected abstract ObjectFactory getObjects();
 
     @Inject
-    protected abstract ProviderFactory getProviders();
-
-    @Inject
-    public GradleJob(ObjectFactory objectFactory) {
-        super(objectFactory);
-        this.objectFactory = objectFactory;
+    public GradleJob() {
+        super();
         getJavaVersion().convention("17");
         getReadOnly().convention(true);
         getCachePaths().add("**/.gradle/loom-cache");
@@ -54,7 +59,7 @@ public abstract class GradleJob extends Job {
     }
 
     public Step step(Action<Step> action) {
-        Step step = objectFactory.newInstance(Step.class, objectFactory);
+        Step step = getObjects().newInstance(Step.class);
         action.execute(step);
         this.getSteps().add(step);
         return step;
@@ -69,7 +74,9 @@ public abstract class GradleJob extends Job {
     }
 
     void setup() {
-        Provider<List<Step>> earlyStepProvider = getProviders().provider(() -> {
+        Property<Unit> unitProvider = getObjects().property(Unit.class);
+        unitProvider.set(Unit.INSTANCE);
+        Provider<List<Step>> earlyStepProvider = unitProvider.map(ignored -> {
             List<Step> earlySteps = new ArrayList<>();
             earlySteps.add(configureStep(step -> {
                 step.getName().set("Setup Java");
@@ -114,9 +121,9 @@ public abstract class GradleJob extends Job {
             return earlySteps;
         });
         getSteps().addAll(earlyStepProvider);
-        this.getPermissions().putAll(getProviders().provider(() -> {
-            Map<String, String> permissions = new HashMap<>();
-            if (!getReadOnly().get()) {
+        this.getPermissions().putAll(getReadOnly().map(readOnly -> {
+            Map<String, String> permissions = new LinkedHashMap<>();
+            if (!readOnly) {
                 permissions.put("contents", "write");
             }
             return permissions;

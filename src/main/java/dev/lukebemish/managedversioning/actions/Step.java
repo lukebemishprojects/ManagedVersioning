@@ -2,7 +2,6 @@ package dev.lukebemish.managedversioning.actions;
 
 import dev.lukebemish.managedversioning.Constants;
 import org.gradle.api.Action;
-import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Property;
@@ -11,7 +10,7 @@ import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.Optional;
 
 import javax.inject.Inject;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public abstract class Step {
@@ -41,11 +40,8 @@ public abstract class Step {
     @Nested
     public abstract MapProperty<String, Object> getParameters();
 
-    private final ObjectFactory objectFactory;
-
     @Inject
-    public Step(ObjectFactory objectFactory) {
-        this.objectFactory = objectFactory;
+    public Step() {
         this.getRunsOnError().convention(false);
     }
 
@@ -59,7 +55,7 @@ public abstract class Step {
     }
 
     Object resolve() {
-        Map<String, Object> step = new HashMap<>();
+        Map<String, Object> step = new LinkedHashMap<>();
         if (this.getName().isPresent()) {
             step.put("name", this.getName().get());
         }

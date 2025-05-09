@@ -1,5 +1,104 @@
+import groovy.transform.CompileStatic
+import javax.inject.Inject
+
 pluginManagement {
     includeBuild('../')
 }
 
+plugins {
+    id 'dev.lukebemish.managedversioning'
+}
+
 rootProject.name = 'managedversioning-test'
+
+@CompileStatic
+abstract class TestRepositorySource implements ValueSource<String, Parameters> {
+    ExecOperations execOperations
+
+    @Inject
+    TestRepositorySource(ExecOperations execOperations) {
+        this.execOperations = execOperations
+    }
+
+    @Override
+    String obtain() {
+        String path = parameters.projectPath.get()+'/build/repository'
+        File directory = new File(path)
+        if (!directory.exists()) {
+            execOperations.exec {
+                it.commandLine 'mkdir', '-p', path
+            }
+            execOperations.exec {
+                it.commandLine 'git', 'init', path
+            }
+            new File(path+'/version.properties').write('version=0.1.0\n')
+            execOperations.exec {
+                it.commandLine 'git', '-C', path, 'add', 'version.properties'
+            }
+            execOperations.exec {
+                it.commandLine 'git', '-C', path, '-c', 'commit.gpgsign=false', 'commit', '-m', '"Initial commit"'
+            }
+        }
+        return path
+    }
+
+    interface Parameters extends ValueSourceParameters {
+        Property<String> getProjectPath();
+    }
+}
+
+var dummyRepository = providers.of(TestRepositorySource) {
+    parameters.projectPath.set layout.rootDirectory.getAsFile().absolutePath
+}.get()
+
+gradle.lifecycle.beforeProject {
+    it.extensions.add('dummyRepository', dummyRepository)
+}
+
+managedVersioning {
+    versionFile.set file("$dummyRepository/version.properties")
+    gitWorkingDir.fileValue file(dummyRepository)
+    gitHubActions {
+        release {
+            workflowDispatch.set true
+            gradleJob {
+                name.set 'build'
+                readOnly.set false
+                def build = gradlew('Build', 'build')
+                gradlew('Test 1', 'test1').configure {
+                    runsWith build
+                }
+                gradlew('Test 1', 'test1').configure {
+                    runsWith build
+                }
+                mavenRelease('github')
+                recordVersion('Record Version', 'version')
+            }
+            gradleJob {
+                name.set 'publish'
+                needs.add('build')
+                gradlew('Publish', 'publish')
+                dependencySubmission()
+                tag.set('${{needs.build.outputs.version}}')
+            }
+        }
+        build_pr {
+            prettyName.set 'Build PR'
+            pullRequest.set true
+            gradleJob {
+                name.set 'build'
+                gradlew 'Build', 'build'
+                gradlew 'Publish', 'publish'
+                pullRequestArtifact()
+            }
+        }
+        publish_pr {
+            prettyName.set 'Publish PR'
+            publishPullRequestAction(
+                'github',
+                'dev/lukebemish/managedversioning/test',
+                'Build PR'
+            )
+        }
+    }
+}

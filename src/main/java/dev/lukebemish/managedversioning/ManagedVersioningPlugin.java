@@ -2,22 +2,28 @@ package dev.lukebemish.managedversioning;
 
 import dev.lukebemish.managedversioning.actions.MakeActions;
 import org.gradle.api.Plugin;
-import org.gradle.api.Project;
+import org.gradle.api.initialization.Settings;
 import org.gradle.process.ExecOperations;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayOutputStream;
 import java.util.List;
 
-public class ManagedVersioningPlugin implements Plugin<Project> {
+public class ManagedVersioningPlugin implements Plugin<Settings> {
     @Override
-    public void apply(@NotNull Project project) {
-        ManagedVersioningExtension extension = project.getExtensions().create("managedVersioning", ManagedVersioningExtension.class);
-        project.getTasks().register("makeActions", MakeActions.class, task -> {
-            task.getActionsDirectory().set(project.getLayout().getProjectDirectory().dir(".github").dir("workflows"));
-            var githubActions = extension.getGitHubActions();
-            task.getGitHubActions().addAllLater(project.provider(() -> githubActions));
-            task.onlyIf(t -> !((MakeActions) t).getGitHubActions().isEmpty());
+    public void apply(@NotNull Settings settings) {
+        ManagedVersioningExtension extension = settings.getExtensions().create("managedVersioning", ManagedVersioningExtension.class, settings);
+        var githubActionsActions = extension.githubActionsActions;
+        settings.getGradle().getLifecycle().beforeProject(project -> {
+            if (project.equals(project.getRootProject())) {
+                project.getTasks().register("makeActions", MakeActions.class, task -> {
+                    task.getActionsDirectory().set(project.getLayout().getProjectDirectory().dir(".github").dir("workflows"));
+                    for (var action : githubActionsActions) {
+                        action.execute(task.getGitHubActions());
+                    }
+                    task.onlyIf(t -> !((MakeActions) t).getGitHubActions().isEmpty());
+                });
+            }
         });
     }
 

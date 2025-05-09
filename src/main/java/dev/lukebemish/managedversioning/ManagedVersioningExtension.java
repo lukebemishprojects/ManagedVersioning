@@ -1,36 +1,33 @@
 package dev.lukebemish.managedversioning;
 
 import dev.lukebemish.managedversioning.actions.GitHubAction;
-import dev.lukebemish.managedversioning.git.GitResultSource;
-import dev.lukebemish.managedversioning.git.GitValueSource;
+import dev.lukebemish.managedversioning.impl.GeneratedVersionDetails;
+import dev.lukebemish.managedversioning.impl.SingleProjectAction;
 import org.gradle.api.Action;
 import org.gradle.api.NamedDomainObjectContainer;
-import org.gradle.api.Project;
+import org.gradle.api.file.BuildLayout;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.RegularFileProperty;
+import org.gradle.api.initialization.Settings;
+import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
+import org.gradle.api.provider.ProviderFactory;
 import org.gradle.api.tasks.Optional;
 
-import java.io.File;
+import javax.inject.Inject;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
 
 public abstract class ManagedVersioningExtension {
-    private final Provider<String> gitHash;
-    private final Provider<String> tagHash;
-    private final Provider<String> gitTimestamp;
-    private final Provider<String> version;
-    private final Provider<String> fromFile;
-    private final Provider<Boolean> stagedChanges;
-    private final Provider<Boolean> unstagedChanges;
-    private final Project project;
-    private final ManagedPublishingExtension publishing;
+    private final ManagedVersioningPublishingExtension publishing;
+    private final GeneratedVersionDetails generatedVersionDetails;
 
     public abstract RegularFileProperty getVersionFile();
     public abstract Property<String> getTimestampFormat();
@@ -40,126 +37,69 @@ public abstract class ManagedVersioningExtension {
     public abstract Property<String> getStagedChangesVersionSuffix();
     public abstract Property<String> getUnstagedChangesVersionSuffix();
     public abstract ListProperty<String> getSuffixParts();
-    public abstract Property<Boolean> getMakeUpdateTasks();
 
-    public ManagedVersioningExtension(Project project) {
-        this.project = project;
-        this.publishing = project.getObjects().newInstance(ManagedPublishingExtension.class, project);
-        this.getGitWorkingDir().convention(project.getLayout().getProjectDirectory());
+    @Inject
+    public ManagedVersioningExtension(Settings settings) {
+        this.publishing = getObjects().newInstance(ManagedVersioningPublishingExtension.class, settings);
+        this.getGitWorkingDir().convention(getLayout().getRootDirectory());
         this.getStagedChangesVersionSuffix().convention("dirty");
         this.getUnstagedChangesVersionSuffix().convention("dirty");
         this.getSuffixParts().convention(Collections.emptyList());
-        this.gitHash = project.getProviders().of(GitValueSource.class, spec -> {
-            spec.getParameters().getArgs().set(List.of("rev-parse", "HEAD"));
-            spec.getParameters().getWorkingDir().set(this.getGitWorkingDir());
-        });
-        var tagName = project.getProviders().of(GitValueSource.class, spec -> {
-            spec.getParameters().getArgs().set(List.of("describe", "--tags", "--abbrev=0", "--always"));
-            spec.getParameters().getWorkingDir().set(this.getGitWorkingDir());
-        });
-        this.tagHash = project.getProviders().of(GitValueSource.class, spec -> {
-            spec.getParameters().getArgs().set(List.of("rev-list", "-n", "1"));
-            spec.getParameters().getArgs().add(tagName);
-            spec.getParameters().getWorkingDir().set(this.getGitWorkingDir());
-        }).map(s -> s.equals(gitHash.get()) ? "" : s);
-        this.getTimestampFormat().convention("yyyy.MM.dd-HH.mm.ss");
-        this.gitTimestamp = project.getProviders().of(GitValueSource.class, spec -> {
-            spec.getParameters().getArgs().set(List.of("log", "-1", "--format=%at"));
-            spec.getParameters().getWorkingDir().set(this.getGitWorkingDir());
-        });
-        this.fromFile = project.getProviders().of(VersionFileSource.class, spec -> {
-            spec.getParameters().getVersionFile().set(this.getVersionFile());
-        });
-        this.stagedChanges = project.getProviders().of(GitResultSource.class, spec -> {
-            spec.getParameters().getArgs().set(List.of("diff-index", "--quiet", "--cached", "HEAD", "--"));
-            spec.getParameters().getWorkingDir().set(this.getGitWorkingDir());
-        }).map(i -> i == 1);
-        var tracked = project.getProviders().of(GitResultSource.class, spec -> {
-            spec.getParameters().getArgs().set(List.of("diff-files", "--quiet"));
-            spec.getParameters().getWorkingDir().set(this.getGitWorkingDir());
-        });
-        var untracked = project.getProviders().of(GitValueSource.class, spec -> {
-            spec.getParameters().getArgs().set(List.of("ls-files", "--exclude-standard", "--others"));
-            spec.getParameters().getWorkingDir().set(this.getGitWorkingDir());
-        });
-        this.unstagedChanges = project.provider(() -> tracked.get() == 1 || !untracked.get().isBlank());
-        this.version = project.getProviders().of(VersionValueSource.class, spec -> {
-            var ps = spec.getParameters();
-            ps.getCommitHash().set(this.gitHash);
-            ps.getHasMetadata().set(this.getMetadataVersion().map(s->true).orElse(false));
-            ps.getStagedChangesVersionSuffix().set(this.getStagedChangesVersionSuffix());
-            ps.getUnstagedChangesVersionSuffix().set(this.getUnstagedChangesVersionSuffix());
-            ps.getSuffixParts().set(this.getSuffixParts());
-            ps.getFromFile().set(this.fromFile);
-            ps.getWorkingDir().set(this.getGitWorkingDir());
-            ps.getTagHash().set(this.tagHash);
-            ps.getStagedChanges().set(this.stagedChanges);
-            ps.getUnstagedChanges().set(this.unstagedChanges);
-        });
-        this.getMakeUpdateTasks().convention(project == project.getRootProject());
+
+        this.generatedVersionDetails = GeneratedVersionDetails.make(
+            getProviders(),
+            getGitWorkingDir(),
+            getVersionFile(),
+            getMetadataVersion(),
+            getStagedChangesVersionSuffix(),
+            getUnstagedChangesVersionSuffix(),
+            getSuffixParts()
+        );
+
+        settings.getGradle().getLifecycle().beforeProject(new SingleProjectAction(
+            this.getGitWorkingDir(),
+            this.getVersionFile(),
+            this.getMetadataVersion(),
+            this.getStagedChangesVersionSuffix(),
+            this.getUnstagedChangesVersionSuffix(),
+            this.getSuffixParts()
+        ));
     }
 
-    public ManagedPublishingExtension getPublishing() {
+    @Inject
+    protected abstract ObjectFactory getObjects();
+
+    @Inject
+    protected abstract BuildLayout getLayout();
+
+    @Inject
+    protected abstract ProviderFactory getProviders();
+
+    public ManagedVersioningPublishingExtension getPublishing() {
         return publishing;
     }
 
-    public void gitHubActions(Action<NamedDomainObjectContainer<GitHubAction>> action) {
-        action.execute(getGitHubActions());
+    public void publishing(Action<? super ManagedVersioningPublishingExtension> action) {
+        action.execute(getPublishing());
     }
-    public abstract NamedDomainObjectContainer<GitHubAction> getGitHubActions();
 
-    public void apply() {
-        project.setVersion(new Object() {
-            @Override
-            public String toString() {
-                return version.get();
-            }
-        });
-
-        var updateVersioning = project.getTasks().register("updateVersioning", UpdateVersioningTask.class, task -> {
-            task.getVersionFile().set(this.getVersionFile().get().getAsFile().getAbsolutePath());
-            task.getUpToDate().set(this.getVersionUpToDate());
-            task.getGitWorkingDir().set(this.getGitWorkingDir().getAsFile().map(File::getPath));
-            task.getVersion().set(this.getVersion());
-            task.getUpdatable().set(project.provider(() -> !this.getUnstagedChanges().get() && !this.getStagedChanges().get()));
-            var makeUpdateTasks = getMakeUpdateTasks();
-            task.onlyIf(t -> makeUpdateTasks.get());
-        });
-        Provider<String> toTagVersion = project.provider(() -> {
-            var version = this.getVersion().get();
-            if (this.getMetadataVersion().isPresent()) {
-                version += "-" + this.getMetadataVersion().get();
-            }
-            return version;
-        });
-        project.getTasks().register("tagRelease", TagReleaseTask.class, task -> {
-            task.getVersion().set(toTagVersion);
-            task.getUpToDate().set(this.getTagUpToDate());
-            task.getGitWorkingDir().set(this.getGitWorkingDir().getAsFile().map(File::getPath));
-            task.getUpdatable().set(project.provider(() -> !this.getUnstagedChanges().get() && !this.getStagedChanges().get()));
-            task.dependsOn(updateVersioning);
-            var makeUpdateTasks = getMakeUpdateTasks();
-            task.onlyIf(t -> makeUpdateTasks.get());
-        });
-        project.getTasks().register("recordVersion", RecordVersionTask.class, task -> {
-            task.getVersion().set(toTagVersion);
-            task.getOutputFile().set(project.getLayout().getBuildDirectory().file("recordVersion.txt"));
-            var makeUpdateTasks = getMakeUpdateTasks();
-            task.onlyIf(t -> makeUpdateTasks.get());
-        });
+    public void gitHubActions(Action<NamedDomainObjectContainer<? super GitHubAction>> action) {
+        githubActionsActions.add(action);
     }
+
+    final List<Action<? super NamedDomainObjectContainer<GitHubAction>>> githubActionsActions = new ArrayList<>();
 
     public Provider<String> getVersion() {
-        return version;
+        return generatedVersionDetails.version();
     }
 
     public Provider<String> getHash() {
-        return gitHash;
+        return generatedVersionDetails.gitHash();
     }
 
     public Provider<String> getTimestamp() {
-        return project.provider(() -> {
-            var output = gitTimestamp.get();
+        return getProviders().provider(() -> {
+            var output = generatedVersionDetails.gitTimestamp().get();
             long timestamp = Long.parseLong(output) * 1000;
             DateFormat dateFormat = new SimpleDateFormat(getTimestampFormat().get());
             dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
@@ -168,19 +108,19 @@ public abstract class ManagedVersioningExtension {
     }
 
     public Provider<Boolean> getTagUpToDate() {
-        return project.provider(() -> getVersionUpToDate().get() && tagHash.get().equals(gitHash.get()));
+        return generatedVersionDetails.getTagUpToDate();
     }
 
     public Provider<Boolean> getVersionUpToDate() {
-        return project.provider(() -> version.get().equals(fromFile.get()));
+        return generatedVersionDetails.getVersionUpToDate();
     }
 
     public Provider<Boolean> getUnstagedChanges() {
-        return unstagedChanges;
+        return generatedVersionDetails.unstagedChanges();
     }
 
     public Provider<Boolean> getStagedChanges() {
-        return stagedChanges;
+        return generatedVersionDetails.stagedChanges();
     }
 
     public void versionPRs() {

@@ -15,14 +15,14 @@ public abstract class TestReportJob {
     @Input
     public abstract ListProperty<Step> getSteps();
 
-    private final ObjectFactory objectFactory;
     @Inject
-    public TestReportJob(ObjectFactory objectFactory) {
-        this.objectFactory = objectFactory;
-    }
+    protected abstract ObjectFactory getObjects();
+
+    @Inject
+    public TestReportJob() {}
 
     Job create() {
-        Job job = objectFactory.newInstance(Job.class, objectFactory);
+        Job job = getObjects().newInstance(Job.class);
         job.getName().set(getName().get());
         job.getPermissions().put("contents", "read");
         job.getPermissions().put("actions", "read");
@@ -32,7 +32,7 @@ public abstract class TestReportJob {
     }
 
     public Step step(Action<Step> action) {
-        Step step = objectFactory.newInstance(Step.class, objectFactory);
+        Step step = getObjects().newInstance(Step.class);
         action.execute(step);
         this.getSteps().add(step);
         return step;

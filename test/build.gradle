@@ -1,67 +1,11 @@
 import dev.lukebemish.managedversioning.actions.MakeActions
-import dev.lukebemish.managedversioning.test.TestRepositorySource
 
 plugins {
-    id 'dev.lukebemish.managedversioning'
     id 'java'
 }
 
-var repository = providers.of(TestRepositorySource) {
-    parameters.projectPath.set project.projectDir.absolutePath
-}.get()
-
-managedVersioning {
-    versionFile.set file("$repository/version.properties")
-    gitWorkingDir.fileValue file(repository)
-    gitHubActions {
-        release {
-            workflowDispatch.set true
-            gradleJob {
-                name.set 'build'
-                readOnly.set false
-                def build = gradlew('Build', 'build')
-                gradlew('Test 1', 'test1').configure {
-                    runsWith build
-                }
-                gradlew('Test 1', 'test1').configure {
-                    runsWith build
-                }
-                mavenRelease('github')
-                recordVersion('Record Version', 'version')
-            }
-            gradleJob {
-                name.set 'publish'
-                needs.add('build')
-                gradlew('Publish', 'publish')
-                dependencySubmission()
-                tag.set('${{needs.build.outputs.version}}')
-            }
-        }
-        build_pr {
-            prettyName.set 'Build PR'
-            pullRequest.set true
-            gradleJob {
-                name.set 'build'
-                gradlew 'Build', 'build'
-                gradlew 'Publish', 'publish'
-                pullRequestArtifact()
-            }
-        }
-        publish_pr {
-            prettyName.set 'Publish PR'
-            publishPullRequestAction(
-                'github',
-                'dev/lukebemish/managedversioning/test',
-                'Build PR'
-            )
-        }
-    }
-}
-
-managedVersioning.apply()
-
 tasks.withType(MakeActions).configureEach {
-    actionsDirectory.fileValue file("$repository/actions")
+    actionsDirectory.fileValue file("$dummyRepository/actions")
 }
 
 println "Version: $version"

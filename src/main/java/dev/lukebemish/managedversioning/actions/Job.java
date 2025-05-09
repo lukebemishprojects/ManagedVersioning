@@ -11,7 +11,7 @@ import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.Optional;
 
 import javax.inject.Inject;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public abstract class Job {
@@ -33,11 +33,11 @@ public abstract class Job {
     @Nested
     public abstract MapProperty<String, Object> getParameters();
 
-    private final ObjectFactory objectFactory;
+    @Inject
+    protected abstract ObjectFactory getObjects();
 
     @Inject
-    public Job(ObjectFactory objectFactory) {
-        this.objectFactory = objectFactory;
+    public Job() {
         this.getRunsOn().convention("ubuntu-22.04");
     }
 
@@ -60,13 +60,13 @@ public abstract class Job {
     }
 
     protected Step configureStep(Action<Step> action) {
-        Step step = objectFactory.newInstance(Step.class, objectFactory);
+        Step step = getObjects().newInstance(Step.class);
         action.execute(step);
         return step;
     }
 
     Object resolve() {
-        Map<String, Object> job = new HashMap<>();
+        Map<String, Object> job = new LinkedHashMap<>();
         job.put("runs-on", this.getRunsOn().get());
         job.put("steps", this.getSteps().get().stream().map(Step::resolve).toList());
         if (this.getIf().isPresent()) {

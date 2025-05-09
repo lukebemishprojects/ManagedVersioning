@@ -2,9 +2,6 @@ package dev.lukebemish.managedversioning.actions;
 
 import dev.lukebemish.managedversioning.Constants;
 import groovy.lang.Closure;
-import groovy.lang.DelegatesTo;
-import groovy.transform.stc.ClosureParams;
-import groovy.transform.stc.SimpleType;
 import org.gradle.api.Action;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.ListProperty;
@@ -14,7 +11,11 @@ import org.gradle.api.tasks.Nested;
 import org.gradle.util.Configurable;
 
 import javax.inject.Inject;
-import java.util.*;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 public abstract class GitHubAction implements Configurable<GitHubAction> {
     @Input
@@ -32,13 +33,11 @@ public abstract class GitHubAction implements Configurable<GitHubAction> {
     @Input
     public abstract Property<String> getPrettyName();
 
-    private final ObjectFactory objectFactory;
     private final String name;
 
     @Inject
-    public GitHubAction(String name, ObjectFactory objectFactory) {
+    public GitHubAction(String name) {
         this.name = name;
-        this.objectFactory = objectFactory;
         this.getPullRequest().convention(false);
         this.getWorkflowDispatch().convention(false);
         this.getConcurrency().convention("ci-${{ github.ref }}");
@@ -46,65 +45,41 @@ public abstract class GitHubAction implements Configurable<GitHubAction> {
         this.getPrettyName().convention(processedName);
     }
 
+    @Inject
+    protected abstract ObjectFactory getObjects();
+
     @Input
     public String getName() {
         return name;
     }
 
-    public Job job(Action<Job> action) {
-        Job job = objectFactory.newInstance(Job.class, objectFactory);
+    public Job job(Action<? super Job> action) {
+        Job job = getObjects().newInstance(Job.class);
         action.execute(job);
         this.getJobs().add(job);
         return job;
     }
 
-    public GradleJob gradleJob(Action<GradleJob> action) {
-        GradleJob gradleJob = objectFactory.newInstance(GradleJob.class, objectFactory);
+    public GradleJob gradleJob(Action<? super GradleJob> action) {
+        GradleJob gradleJob = getObjects().newInstance(GradleJob.class);
         action.execute(gradleJob);
         this.getJobs().add(gradleJob);
         return gradleJob;
     }
 
-    public GradleJob gradleJob(
-        @DelegatesTo(value = GradleJob.class, strategy = Closure.DELEGATE_FIRST)
-        @ClosureParams(value = SimpleType.class, options = "dev.lukebemish.managedversioning.actions.GradleJob")
-        Closure<?> closure
-    ) {
-        GradleJob gradleJob = objectFactory.newInstance(GradleJob.class, objectFactory);
-        closure.setDelegate(gradleJob);
-        closure.setResolveStrategy(Closure.DELEGATE_FIRST);
-        closure.call(gradleJob);
-        this.getJobs().add(gradleJob);
-        return gradleJob;
-    }
-
-    public Job testReportJob(Action<TestReportJob> action) {
-        TestReportJob testReportJob = objectFactory.newInstance(TestReportJob.class, objectFactory);
+    public Job testReportJob(Action<? super TestReportJob> action) {
+        TestReportJob testReportJob = getObjects().newInstance(TestReportJob.class);
         action.execute(testReportJob);
         Job job = testReportJob.create();
         this.getJobs().add(job);
         return job;
     }
 
-    public Job testReportJob(
-        @DelegatesTo(value = TestReportJob.class, strategy = Closure.DELEGATE_FIRST)
-        @ClosureParams(value = SimpleType.class, options = "dev.lukebemish.managedversioning.actions.TestReportJob")
-        Closure<?> closure
-    ) {
-        TestReportJob testReportJob = objectFactory.newInstance(TestReportJob.class, objectFactory);
-        closure.setDelegate(testReportJob);
-        closure.setResolveStrategy(Closure.DELEGATE_FIRST);
-        closure.call(testReportJob);
-        Job job = testReportJob.create();
-        this.getJobs().add(job);
-        return job;
-    }
-
     Object resolve() {
-        Map<String, Object> action = new HashMap<>();
+        Map<String, Object> action = new LinkedHashMap<>();
         action.put("name", getPrettyName().get());
         action.put("concurrency", this.getConcurrency().get());
-        Map<String, Object> on = new HashMap<>();
+        Map<String, Object> on = new LinkedHashMap<>();
         var branches = this.getOnBranches().get();
         if (!branches.isEmpty()) {
             on.put("push", Map.of("branches", branches));
@@ -124,7 +99,7 @@ public abstract class GitHubAction implements Configurable<GitHubAction> {
         if (!on.isEmpty()) {
             action.put("on", on);
         }
-        Map<String, Object> jobs = new HashMap<>();
+        Map<String, Object> jobs = new LinkedHashMap<>();
         for (var job : this.getJobs().get()) {
             jobs.put(job.getName().get(), job.resolve());
         }
