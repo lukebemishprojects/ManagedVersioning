@@ -33,7 +33,8 @@ public abstract class ManagedPublishingExtension {
                     container.sonatype(it -> {
                         it.getUsername().set(System.getenv(Constants.CENTRAL_USER));
                         it.getPassword().set(System.getenv(Constants.CENTRAL_PASSWORD));
-                        it.getNexusUrl().set(URI.create("https://s01.oss.sonatype.org/service/local/"));
+                        it.getNexusUrl().set(URI.create("https://ossrh-staging-api.central.sonatype.com/service/local/"));
+                        it.getSnapshotRepositoryUrl().set(URI.create("https://central.sonatype.com/repository/maven-snapshots/"));
                     });
                 });
             });
