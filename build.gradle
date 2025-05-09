@@ -1,3 +1,5 @@
+import org.gradle.api.attributes.plugin.GradlePluginApiVersion
+
 plugins {
     id 'java-gradle-plugin'
     id 'maven-publish'
@@ -5,6 +7,17 @@ plugins {
 
 group = 'dev.lukebemish'
 version = '2.0.0-beta.1'
+
+['apiElements', 'runtimeElements'].each {
+    configurations.named(it).configure {
+        attributes {
+            attribute(
+                GradlePluginApiVersion.GRADLE_PLUGIN_API_VERSION_ATTRIBUTE,
+                objects.named(GradlePluginApiVersion, gradle.gradleVersion)
+            )
+        }
+    }
+}
 
 repositories {
     mavenCentral()
