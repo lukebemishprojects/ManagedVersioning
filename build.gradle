@@ -37,12 +37,24 @@ gradlePlugin {
     }
 }
 
-tasks.register('printVersionName') {
-    doLast{
-        project.exec {
-            commandLine 'echo', "GRADLE_VERSION=(${project.version})"
+@UntrackedTask(because = "Must print to the console to capture the version")
+abstract class PrintVersionNameTask extends DefaultTask {
+    @javax.inject.Inject
+    protected abstract ExecOperations getExecOperations()
+
+    @Input
+    abstract Property<String> getProjectVersion()
+
+    @TaskAction
+    void printVersionName() {
+        execOperations.exec {
+            commandLine 'echo', "GRADLE_VERSION=(${projectVersion.get()})"
         }
     }
+}
+
+tasks.register('printVersionName', PrintVersionNameTask) {
+    projectVersion = project.version
 }
 
 java.withSourcesJar()
@@ -57,7 +69,7 @@ publishing {
     repositories {
         if (System.getenv('MAVEN_URL')) {
             maven {
-                name = 'LukesMaven'
+                name = "Luke's Maven"
                 url = System.getenv('MAVEN_URL')
                 credentials {
                     username = System.getenv('MAVEN_USER') ?: ''
