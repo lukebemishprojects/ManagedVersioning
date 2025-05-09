@@ -69,7 +69,7 @@ publishing {
     repositories {
         if (System.getenv('MAVEN_URL')) {
             maven {
-                name = "Luke's Maven"
+                name = "ReleaseMaven"
                 url = System.getenv('MAVEN_URL')
                 credentials {
                     username = System.getenv('MAVEN_USER') ?: ''
