@@ -1,12 +1,10 @@
 package dev.lukebemish.managedversioning;
 
-import io.github.gradlenexus.publishplugin.NexusPublishExtension;
-import io.github.gradlenexus.publishplugin.NexusPublishPlugin;
+import dev.lukebemish.centralportalpublishing.CentralPortalProjectExtension;
 import org.gradle.api.Action;
 import org.gradle.api.initialization.Settings;
 
 import javax.inject.Inject;
-import java.net.URI;
 
 public abstract class ManagedVersioningPublishingExtension {
     private final Settings settings;
@@ -16,25 +14,24 @@ public abstract class ManagedVersioningPublishingExtension {
         this.settings = settings;
     }
 
-    public void mavenCentral() {
+    public void mavenCentralMakeBundle() {
         settings.getGradle().getLifecycle().beforeProject(project -> {
             if (project.equals(project.getRootProject())) {
-                // TODO: find or make better alternative to nexus publish plugin
-                project.getPlugins().apply(NexusPublishPlugin.class);
+                project.getPlugins().apply("dev.lukebemish.central-portal-publishing");
                 if (System.getenv(Constants.CENTRAL_USER) != null) {
-                    project.getExtensions().configure(NexusPublishExtension.class, ext -> {
-                        ext.repositories(container -> {
-                            container.sonatype(it -> {
-                                it.getUsername().set(System.getenv(Constants.CENTRAL_USER));
-                                it.getPassword().set(System.getenv(Constants.CENTRAL_PASSWORD));
-                                it.getNexusUrl().set(URI.create("https://ossrh-staging-api.central.sonatype.com/service/local/"));
-                                it.getSnapshotRepositoryUrl().set(URI.create("https://central.sonatype.com/repository/maven-snapshots/"));
-                            });
-                        });
+                    project.getExtensions().getByType(CentralPortalProjectExtension.class).bundle("central", spec -> {
+                        spec.getPublishingType().set("AUTOMATIC");
+                        spec.getUsername().set(System.getenv(Constants.CENTRAL_USER));
+                        spec.getPassword().set(System.getenv(Constants.CENTRAL_PASSWORD));
                     });
                 }
             }
         });
+    }
+
+    public void mavenCentral() {
+        mavenCentralMakeBundle();
+        configureProjectWise(ManagedVersioningProjectExtension::mavenCentralUseBundle);
     }
 
     private void configureProjectWise(Action<? super ManagedVersioningProjectExtension> action) {

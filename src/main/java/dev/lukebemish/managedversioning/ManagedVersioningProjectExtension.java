@@ -1,6 +1,9 @@
 package dev.lukebemish.managedversioning;
 
+import dev.lukebemish.centralportalpublishing.CentralPortalProjectExtension;
+import dev.lukebemish.centralportalpublishing.CentralPortalRepositoryHandlerExtension;
 import org.gradle.api.Project;
+import org.gradle.api.plugins.ExtensionAware;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.publish.Publication;
 import org.gradle.api.publish.PublishingExtension;
@@ -85,6 +88,18 @@ public class ManagedVersioningProjectExtension {
         if (System.getenv(Constants.GPG_KEY) != null) {
             signing.useInMemoryPgpKeys(System.getenv(Constants.GPG_KEY), System.getenv(Constants.GPG_PASSWORD));
             publishing.getPublications().all(signing::sign);
+        }
+    }
+
+    public void mavenCentralUseBundle() {
+        var publishing = figureOutPublishing();
+
+        project.getPlugins().apply("dev.lukebemish.central-portal-publishing");
+        if (System.getenv(Constants.CENTRAL_USER) != null) {
+            publishing.repositories(repositories -> {
+                var centralPortalPublishing = ((ExtensionAware) repositories).getExtensions().getByType(CentralPortalRepositoryHandlerExtension.class);
+                centralPortalPublishing.portalBundle(":", "central");
+            });
         }
     }
 
