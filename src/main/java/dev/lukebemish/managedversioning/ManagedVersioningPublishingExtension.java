@@ -21,8 +21,8 @@ public abstract class ManagedVersioningPublishingExtension {
                 if (System.getenv(Constants.CENTRAL_USERNAME) != null) {
                     project.getExtensions().getByType(CentralPortalProjectExtension.class).bundle("central", spec -> {
                         spec.getPublishingType().set("AUTOMATIC");
-                        spec.getUsername().set(settings.getProviders().environmentVariable(Constants.CENTRAL_USERNAME));
-                        spec.getPassword().set(settings.getProviders().environmentVariable(Constants.CENTRAL_PASSWORD));
+                        spec.getUsername().set(project.getProviders().environmentVariable(Constants.CENTRAL_USERNAME));
+                        spec.getPassword().set(project.getProviders().environmentVariable(Constants.CENTRAL_PASSWORD));
                     });
                 }
             }
