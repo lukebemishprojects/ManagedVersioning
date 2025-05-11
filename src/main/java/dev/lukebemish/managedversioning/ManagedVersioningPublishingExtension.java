@@ -18,11 +18,11 @@ public abstract class ManagedVersioningPublishingExtension {
         settings.getGradle().getLifecycle().beforeProject(project -> {
             if (project.equals(project.getRootProject())) {
                 project.getPlugins().apply("dev.lukebemish.central-portal-publishing");
-                if (System.getenv(Constants.CENTRAL_USER) != null) {
+                if (System.getenv(Constants.CENTRAL_USERNAME) != null) {
                     project.getExtensions().getByType(CentralPortalProjectExtension.class).bundle("central", spec -> {
                         spec.getPublishingType().set("AUTOMATIC");
-                        spec.getUsername().set(System.getenv(Constants.CENTRAL_USER));
-                        spec.getPassword().set(System.getenv(Constants.CENTRAL_PASSWORD));
+                        spec.getUsername().set(settings.getProviders().environmentVariable(Constants.CENTRAL_USERNAME));
+                        spec.getPassword().set(settings.getProviders().environmentVariable(Constants.CENTRAL_PASSWORD));
                     });
                 }
             }

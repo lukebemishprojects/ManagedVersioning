@@ -1,6 +1,5 @@
 package dev.lukebemish.managedversioning;
 
-import dev.lukebemish.centralportalpublishing.CentralPortalProjectExtension;
 import dev.lukebemish.centralportalpublishing.CentralPortalRepositoryHandlerExtension;
 import org.gradle.api.Project;
 import org.gradle.api.plugins.ExtensionAware;
@@ -95,7 +94,7 @@ public class ManagedVersioningProjectExtension {
         var publishing = figureOutPublishing();
 
         project.getPlugins().apply("dev.lukebemish.central-portal-publishing");
-        if (System.getenv(Constants.CENTRAL_USER) != null) {
+        if (System.getenv(Constants.CENTRAL_USERNAME) != null) {
             publishing.repositories(repositories -> {
                 var centralPortalPublishing = ((ExtensionAware) repositories).getExtensions().getByType(CentralPortalRepositoryHandlerExtension.class);
                 centralPortalPublishing.portalBundle(":", "central");

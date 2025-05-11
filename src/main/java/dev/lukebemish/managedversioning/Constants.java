@@ -15,7 +15,7 @@ public final class Constants {
     public static final String STAGING_MAVEN_USER = "STAGING_MAVEN_USER";
     public static final String PR_MAVEN_PASSWORD = "PR_MAVEN_PASSWORD";
     public static final String CENTRAL_PASSWORD = "CENTRAL_PASSWORD";
-    public static final String CENTRAL_USER = "CENTRAL_USER";
+    public static final String CENTRAL_USERNAME = "CENTRAL_USERNAME";
     public static final String GPG_KEY = "GPG_KEY";
     public static final String GPG_PASSWORD = "GPG_PASSWORD";
     public static final String BUILD_CACHE_PASSWORD = "BUILD_CACHE_PASSWORD";

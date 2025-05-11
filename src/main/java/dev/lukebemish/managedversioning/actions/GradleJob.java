@@ -208,7 +208,7 @@ public abstract class GradleJob extends Job {
 
     public void mavenCentral() {
         secret(Constants.CENTRAL_PASSWORD);
-        secret(Constants.CENTRAL_USER);
+        secret(Constants.CENTRAL_USERNAME);
     }
 
     public void mavenStaging(String user) {
