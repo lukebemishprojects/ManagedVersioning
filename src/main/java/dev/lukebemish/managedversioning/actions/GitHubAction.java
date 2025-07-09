@@ -8,6 +8,7 @@ import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Nested;
+import org.gradle.api.tasks.Optional;
 import org.gradle.util.Configurable;
 
 import javax.inject.Inject;
@@ -19,6 +20,7 @@ import java.util.Map;
 
 public abstract class GitHubAction implements Configurable<GitHubAction> {
     @Input
+    @Optional
     public abstract Property<String> getConcurrency();
     @Input
     public abstract ListProperty<String> getOnBranches();
@@ -78,7 +80,9 @@ public abstract class GitHubAction implements Configurable<GitHubAction> {
     Object resolve() {
         Map<String, Object> action = new LinkedHashMap<>();
         action.put("name", getPrettyName().get());
-        action.put("concurrency", this.getConcurrency().get());
+        if (getConcurrency().isPresent()) {
+            action.put("concurrency", this.getConcurrency().get());
+        }
         Map<String, Object> on = new LinkedHashMap<>();
         var branches = this.getOnBranches().get();
         if (!branches.isEmpty()) {
