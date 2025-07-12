@@ -83,7 +83,7 @@ public abstract class ManagedVersioningExtension {
         action.execute(getPublishing());
     }
 
-    public void gitHubActions(Action<NamedDomainObjectContainer<? super GitHubAction>> action) {
+    public void gitHubActions(Action<NamedDomainObjectContainer<GitHubAction>> action) {
         githubActionsActions.add(action);
     }
 
